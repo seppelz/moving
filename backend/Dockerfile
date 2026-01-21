@@ -1,4 +1,4 @@
-# Backend Dockerfile for Railway
+# Backend Dockerfile for Railway - Updated Jan 2026
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -19,6 +19,5 @@ COPY . .
 # Expose port (Railway will set PORT env var)
 EXPOSE 8000
 
-# Run application with PORT from environment variable
-# Use sh -c to ensure environment variable expansion
-CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+# Run application - PORT must be expanded via shell
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
