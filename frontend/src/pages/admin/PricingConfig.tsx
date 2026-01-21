@@ -5,9 +5,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ChevronLeft, Save, RotateCcw, DollarSign, TrendingUp,
+  ChevronLeft, Save, RotateCcw, TrendingUp,
   Settings, AlertCircle, CheckCircle, Package, Truck,
-  Clock, Layers, Home, Wrench, Info
+  Clock, Layers, Wrench, Info
 } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import clsx from 'clsx'

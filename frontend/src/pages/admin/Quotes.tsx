@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Filter, Download, ChevronLeft, FileText, Eye } from 'lucide-react'
+import { Search, Download, ChevronLeft, FileText, Eye } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote, QuoteStatus } from '@/types'
 

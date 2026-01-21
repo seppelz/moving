@@ -3,11 +3,6 @@
  * Uses PostHog or Mixpanel (placeholder for now)
  */
 
-interface AnalyticsEvent {
-  event: string
-  properties?: Record<string, any>
-}
-
 class Analytics {
   private enabled: boolean
   
@@ -28,14 +23,14 @@ class Analytics {
     console.log('[Analytics]', event, properties)
   }
   
-  identify(userId: string, traits?: Record<string, any>) {
+  identify(_userId: string, _traits?: Record<string, any>) {
     if (!this.enabled) return
     
     // TODO: Integrate with PostHog/Mixpanel
     // posthog.identify(userId, traits)
   }
   
-  page(name: string, properties?: Record<string, any>) {
+  page(_name: string, _properties?: Record<string, any>) {
     if (!this.enabled) return
     
     // TODO: Track page views

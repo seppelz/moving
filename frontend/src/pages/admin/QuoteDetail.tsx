@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, Download, Mail, Edit, Package, MapPin, Users,
-  Clock, Euro, TrendingUp, FileText, Calculator, CheckCircle,
-  AlertCircle, XCircle, Loader
+  Clock, FileText, Calculator, CheckCircle,
+  AlertCircle, Loader
 } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote } from '@/types'

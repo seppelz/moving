@@ -3,7 +3,6 @@
  */
 import { create } from 'zustand'
 import type {
-  Address,
   InventoryItem,
   Service,
   QuoteCalculateResponse,
@@ -112,7 +111,7 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   
   setDestinationPostalCode: (code) => set({ destinationPostalCode: code }),
   
-  setApartmentSize: (size) => set({ apartmentSize: size }),
+  setApartmentSize: (size) => set({ apartmentSize: size as ApartmentSize | null }),
   
   setOriginFloor: (floor) => set({ originFloor: floor }),
   

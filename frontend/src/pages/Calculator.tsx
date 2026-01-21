@@ -11,9 +11,8 @@ import StepServices from '@/components/calculator/StepServices'
 import StepContact from '@/components/calculator/StepContact'
 
 export default function Calculator() {
-  const { step, useSmartMode } = useCalculatorStore((state) => ({
+  const { step } = useCalculatorStore((state) => ({
     step: state.step,
-    useSmartMode: state.useSmartMode,
   }))
   
   return (

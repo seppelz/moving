@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Sparkles, ArrowRight, ArrowLeft, Package, CheckCircle, 
-  Edit3, TrendingUp, TrendingDown, Users, Loader
+  Edit3, TrendingUp, TrendingDown, Users
 } from 'lucide-react'
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'

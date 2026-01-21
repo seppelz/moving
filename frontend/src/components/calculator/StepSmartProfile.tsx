@@ -68,6 +68,10 @@ export default function StepSmartProfile() {
   
   const handleNext = () => {
     // Save smart profile data
+    if (!apartmentSize || !householdType || !furnishingLevel) {
+      return
+    }
+    
     setSmartProfile({
       apartment_size: apartmentSize,
       household_type: householdType,
