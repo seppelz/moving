@@ -24,15 +24,15 @@ class Settings(BaseSettings):
     ]
     
     # Supabase
-    SUPABASE_URL: str = Field(..., env="SUPABASE_URL")
-    SUPABASE_KEY: str = Field(..., env="SUPABASE_KEY")
-    SUPABASE_SERVICE_KEY: str = Field(..., env="SUPABASE_SERVICE_KEY")
+    SUPABASE_URL: str = Field(default="", env="SUPABASE_URL")
+    SUPABASE_KEY: str = Field(default="", env="SUPABASE_KEY")
+    SUPABASE_SERVICE_KEY: str = Field(default="", env="SUPABASE_SERVICE_KEY")
     
     # Database
-    DATABASE_URL: str = Field(..., env="DATABASE_URL")
+    DATABASE_URL: str = Field(default="sqlite:///./test.db", env="DATABASE_URL")
     
     # Google Maps
-    GOOGLE_MAPS_API_KEY: str = Field(..., env="GOOGLE_MAPS_API_KEY")
+    GOOGLE_MAPS_API_KEY: str = Field(default="", env="GOOGLE_MAPS_API_KEY")
     
     # Email (optional - can use Supabase Auth or SendGrid)
     SMTP_HOST: str = Field(default="smtp.gmail.com", env="SMTP_HOST")
@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
     
     # Security
-    SECRET_KEY: str = Field(..., env="SECRET_KEY")
+    SECRET_KEY: str = Field(default="dev-secret-key-change-in-production", env="SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
