@@ -6,6 +6,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://api.movemaster.de/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
