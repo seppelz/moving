@@ -2,6 +2,7 @@
 Smart Quote API - Profile-based quote generation
 Uses pre-defined apartment profiles to estimate moving volume quickly
 """
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -10,7 +11,7 @@ from pydantic import BaseModel, Field
 from app.core.database import get_db
 from app.services.smart_predictor import get_smart_predictor
 
-
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -66,9 +67,12 @@ async def get_smart_prediction(
     a moving volume estimate. Based on typical German households, this approach 
     typically achieves 85-95% accuracy compared to manual item selection.
     """
-    predictor = get_smart_predictor(db)
+    logger.info(f"Smart prediction request: {request.apartment_size}, {request.household_type}")
     
     try:
+        predictor = get_smart_predictor(db)
+        logger.info("Smart predictor initialized")
+        
         prediction = predictor.predict_volume(
             apartment_size=request.apartment_size,
             household_type=request.household_type,
@@ -79,9 +83,11 @@ async def get_smart_prediction(
             special_items=request.special_items
         )
         
+        logger.info(f"Prediction generated successfully: {prediction.get('predicted_volume_m3')}m³")
         return prediction
     
     except Exception as e:
+        logger.error(f"Error generating smart prediction: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500,
             detail=f"Error generating prediction: {str(e)}"
