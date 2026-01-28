@@ -397,10 +397,15 @@ async def get_quote_breakdown(
         for service in quote.services
     ]
     
+    # Approximate travel time for breakdown if not stored (distance / 65km/h for trucks)
+    # This ensures the breakdown remains realistic even without DB migration
+    approx_travel_time = Decimal(str(quote.distance_km)) / Decimal('65') if quote.distance_km > 50 else Decimal('1')
+    
     # Regenerate quote to get breakdown
     detailed_quote = pricing_engine.generate_quote(
         volume=Decimal(str(quote.volume_m3)),
         distance_km=Decimal(str(quote.distance_km)),
+        travel_time_hours=approx_travel_time,
         origin_floor=quote.origin_address.get('floor', 0),
         destination_floor=quote.destination_address.get('floor', 0),
         origin_has_elevator=quote.origin_address.get('has_elevator', False),

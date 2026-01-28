@@ -20,6 +20,9 @@ interface PricingBreakdown {
     labor_cost: { min: number; max: number }
     floor_surcharge: number
     services_cost: { min: number; max: number }
+    man_hours: number
+    crew_size: number
+    travel_time: number
   }
   configuration_used: {
     base_rate_m3: string
@@ -47,21 +50,21 @@ interface PricingBreakdown {
 export default function QuoteDetail() {
   const { quoteId } = useParams<{ quoteId: string }>()
   const navigate = useNavigate()
-  
+
   const [quote, setQuote] = useState<Quote | null>(null)
   const [breakdown, setBreakdown] = useState<PricingBreakdown | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   useEffect(() => {
     if (quoteId) {
       loadQuoteDetails()
     }
   }, [quoteId])
-  
+
   const loadQuoteDetails = async () => {
     if (!quoteId) return
-    
+
     setLoading(true)
     try {
       const [quoteData, breakdownData] = await Promise.all([
@@ -78,7 +81,7 @@ export default function QuoteDetail() {
       setLoading(false)
     }
   }
-  
+
   const handleDownloadPDF = async () => {
     if (!quoteId) return
     try {
@@ -88,7 +91,7 @@ export default function QuoteDetail() {
       alert('Fehler beim Erstellen des PDFs')
     }
   }
-  
+
   const handleStatusChange = async (newStatus: string) => {
     if (!quoteId) return
     try {
@@ -99,7 +102,7 @@ export default function QuoteDetail() {
       alert('Fehler beim Aktualisieren des Status')
     }
   }
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -110,7 +113,7 @@ export default function QuoteDetail() {
       </div>
     )
   }
-  
+
   if (error || !quote || !breakdown) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -138,11 +141,11 @@ export default function QuoteDetail() {
       </div>
     )
   }
-  
+
   const totalMin = Number(quote.min_price)
   const totalMax = Number(quote.max_price)
   const avgPrice = (totalMin + totalMax) / 2
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -170,7 +173,7 @@ export default function QuoteDetail() {
               </button>
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
@@ -184,7 +187,7 @@ export default function QuoteDetail() {
                 })}
               </p>
             </div>
-            
+
             {/* Status Selector */}
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">Status:</span>
@@ -212,7 +215,7 @@ export default function QuoteDetail() {
           </div>
         </div>
       </header>
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Details */}
@@ -229,7 +232,7 @@ export default function QuoteDetail() {
                 </div>
               </div>
             </div>
-            
+
             {/* Customer Information */}
             <div className="card">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -242,14 +245,14 @@ export default function QuoteDetail() {
                 <InfoRow label="Telefon" value={quote.customer_phone || 'Nicht angegeben'} />
               </div>
             </div>
-            
+
             {/* Move Details */}
             <div className="card">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary-600" />
                 Umzugsdetails
               </h2>
-              
+
               <div className="space-y-4">
                 {/* Origin */}
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -262,7 +265,7 @@ export default function QuoteDetail() {
                     {breakdown.quote_details.origin_has_elevator ? ' (mit Aufzug)' : ' (ohne Aufzug)'}
                   </div>
                 </div>
-                
+
                 {/* Destination */}
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="text-sm text-gray-600 mb-1">Nach (Einzug)</div>
@@ -274,7 +277,7 @@ export default function QuoteDetail() {
                     {breakdown.quote_details.destination_has_elevator ? ' (mit Aufzug)' : ' (ohne Aufzug)'}
                   </div>
                 </div>
-                
+
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-4 pt-4">
                   <StatBox
@@ -295,14 +298,14 @@ export default function QuoteDetail() {
                 </div>
               </div>
             </div>
-            
+
             {/* Inventory */}
             <div className="card">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Package className="w-5 h-5 text-primary-600" />
                 Inventar ({quote.inventory.length} Artikel)
               </h2>
-              
+
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -353,7 +356,7 @@ export default function QuoteDetail() {
                 </table>
               </div>
             </div>
-            
+
             {/* Services */}
             {quote.services.length > 0 && (
               <div className="card">
@@ -361,7 +364,7 @@ export default function QuoteDetail() {
                   <CheckCircle className="w-5 h-5 text-primary-600" />
                   Zusätzliche Services
                 </h2>
-                
+
                 <div className="space-y-3">
                   {quote.services.map((service, idx) => (
                     service.enabled && (
@@ -388,7 +391,7 @@ export default function QuoteDetail() {
               </div>
             )}
           </div>
-          
+
           {/* Right Column - Pricing Breakdown */}
           <div className="space-y-6">
             {/* Pricing Breakdown */}
@@ -397,7 +400,7 @@ export default function QuoteDetail() {
                 <Calculator className="w-5 h-5 text-primary-600" />
                 Preisberechnung
               </h2>
-              
+
               <div className="space-y-3">
                 {/* Volume Cost */}
                 <BreakdownRow
@@ -406,7 +409,7 @@ export default function QuoteDetail() {
                   minValue={breakdown.breakdown.volume_cost.min}
                   maxValue={breakdown.breakdown.volume_cost.max}
                 />
-                
+
                 {/* Distance Cost */}
                 <BreakdownRow
                   label="Kilometerkosten"
@@ -414,7 +417,7 @@ export default function QuoteDetail() {
                   minValue={breakdown.breakdown.distance_cost.min}
                   maxValue={breakdown.breakdown.distance_cost.max}
                 />
-                
+
                 {/* Labor Cost */}
                 <BreakdownRow
                   label="Arbeitskosten"
@@ -422,7 +425,7 @@ export default function QuoteDetail() {
                   minValue={breakdown.breakdown.labor_cost.min}
                   maxValue={breakdown.breakdown.labor_cost.max}
                 />
-                
+
                 {/* Floor Surcharge */}
                 {breakdown.breakdown.floor_surcharge > 0 && (
                   <BreakdownRow
@@ -433,7 +436,7 @@ export default function QuoteDetail() {
                     highlight
                   />
                 )}
-                
+
                 {/* Services Cost */}
                 {breakdown.breakdown.services_cost.min > 0 && (
                   <BreakdownRow
@@ -444,7 +447,33 @@ export default function QuoteDetail() {
                     highlight
                   />
                 )}
-                
+
+                {/* Duration Factors */}
+                <div className="pt-3 border-t border-gray-100">
+                  <h3 className="text-xs font-bold text-gray-900 mb-2 uppercase tracking-tight">Faktor-Aufschlüsselung</h3>
+                  <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className="bg-gray-50 p-2 rounded border border-gray-100">
+                      <div className="text-gray-500 uppercase">Mannstunden</div>
+                      <div className="font-bold text-gray-900">{breakdown.breakdown.man_hours} Std.</div>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded border border-gray-100">
+                      <div className="text-gray-500 uppercase">Teamgröße</div>
+                      <div className="font-bold text-gray-900">{breakdown.breakdown.crew_size} Personen</div>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded border border-gray-100">
+                      <div className="text-gray-500 uppercase">Arbeitszeit</div>
+                      <div className="font-bold text-gray-900">{(breakdown.breakdown.man_hours / breakdown.breakdown.crew_size).toFixed(1)} Std.</div>
+                    </div>
+                    <div className="bg-gray-50 p-2 rounded border border-gray-100">
+                      <div className="text-gray-500 uppercase">Fahrtzeit</div>
+                      <div className="font-bold text-gray-900">{breakdown.breakdown.travel_time} Std.</div>
+                    </div>
+                  </div>
+                  <div className="mt-2 text-[10px] text-gray-500 italic">
+                    Regel: (Mannstunden / Personen) + Fahrtzeit = Gesamtdauer ({breakdown.quote_details.estimated_hours} Std.)
+                  </div>
+                </div>
+
                 {/* Total */}
                 <div className="pt-3 border-t-2 border-gray-200">
                   <div className="flex items-center justify-between">
@@ -459,14 +488,14 @@ export default function QuoteDetail() {
                 </div>
               </div>
             </div>
-            
+
             {/* Configuration Details */}
             <div className="card">
               <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Verwendete Konfiguration
               </h2>
-              
+
               <div className="space-y-2 text-xs">
                 <ConfigRow label="Basisrate/m³" value={breakdown.configuration_used.base_rate_m3} />
                 <ConfigRow label="Rate Nahbereich" value={breakdown.configuration_used.rate_km_near} />
@@ -478,7 +507,7 @@ export default function QuoteDetail() {
                 <ConfigRow label="Küchenmontage" value={breakdown.configuration_used.kitchen_assembly} />
                 <ConfigRow label="Außenaufzug" value={breakdown.configuration_used.external_lift} />
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <Link
                   to="/admin/pricing"
@@ -489,13 +518,13 @@ export default function QuoteDetail() {
                 </Link>
               </div>
             </div>
-            
+
             {/* Move Complexity Indicators */}
             <div className="card">
               <h2 className="text-sm font-semibold text-gray-700 mb-3">
                 Komplexitätsindikatoren
               </h2>
-              
+
               <div className="space-y-2">
                 <ComplexityIndicator
                   label="Treppensituation"
@@ -512,8 +541,8 @@ export default function QuoteDetail() {
                     breakdown.quote_details.volume_m3 > 60
                       ? 'Großer Umzug'
                       : breakdown.quote_details.volume_m3 < 20
-                      ? 'Kleiner Umzug'
-                      : 'Standard-Umzug'
+                        ? 'Kleiner Umzug'
+                        : 'Standard-Umzug'
                   }
                   isComplex={breakdown.quote_details.volume_m3 > 60}
                 />
@@ -523,8 +552,8 @@ export default function QuoteDetail() {
                     breakdown.quote_details.distance_km > 100
                       ? 'Fernumzug'
                       : breakdown.quote_details.distance_km < 30
-                      ? 'Nahbereich'
-                      : 'Mittlere Distanz'
+                        ? 'Nahbereich'
+                        : 'Mittlere Distanz'
                   }
                   isComplex={breakdown.quote_details.distance_km > 100}
                 />

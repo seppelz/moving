@@ -97,6 +97,7 @@ async def calculate_quote(
     quote_data = pricing_engine.generate_quote(
         volume=volume,
         distance_km=distance_km,
+        travel_time_hours=duration_hours or Decimal('0'),
         origin_floor=request.origin_floor or 0,
         destination_floor=request.destination_floor or 0,
         origin_has_elevator=request.origin_has_elevator or False,
@@ -150,6 +151,7 @@ async def submit_quote(
     quote_data = pricing_engine.generate_quote(
         volume=volume,
         distance_km=distance_km,
+        travel_time_hours=route_info.get("duration_hours", Decimal('0')),
         origin_floor=request.origin.floor or 0,
         destination_floor=request.destination.floor or 0,
         origin_has_elevator=request.origin.has_elevator or False,

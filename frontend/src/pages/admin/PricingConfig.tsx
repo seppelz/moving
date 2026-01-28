@@ -454,6 +454,47 @@ export default function PricingConfig() {
           
           {/* Right Column - Preview & Info */}
           <div className="space-y-6">
+            {/* Calculation Logic Overview */}
+            <div className="card border-primary-100 bg-primary-50/30">
+              <h3 className="text-sm font-semibold text-primary-900 mb-3 flex items-center gap-2">
+                <Info className="w-4 h-4 text-primary-600" />
+                Berechnungslogik
+              </h3>
+              
+              <div className="space-y-4 text-xs text-gray-700">
+                <div>
+                  <p className="font-bold text-gray-900 mb-1">1. Arbeitsaufwand (Mannstunden)</p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-1">
+                    <li>Basis: 0,12 Std. pro m³</li>
+                    <li>Etagen: +0,02 Std. pro m³/Etage</li>
+                    <li>Service: +0,15m³ (Abbau), +0,25m³ (Packen)</li>
+                    <li>Minimum: 4 Mannstunden</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-bold text-gray-900 mb-1">2. Teamgröße</p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-1">
+                    <li>&lt; 20m³: 2 Personen</li>
+                    <li>20 - 45m³: 3 Personen</li>
+                    <li>&gt; 45m³: 4 Personen</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <p className="font-bold text-gray-900 mb-1">3. Fahrzeit & Pausen</p>
+                  <ul className="list-disc list-inside space-y-0.5 ml-1">
+                    <li>LKW-Faktor: Google Zeit × 1,15</li>
+                    <li>Pause: +45 Min ab 4,5 Std. Fahrt</li>
+                  </ul>
+                </div>
+
+                <div className="pt-2 border-t border-primary-100 text-[10px] italic">
+                  Gesamtzeit = (Mannstunden / Personen) + Fahrtzeit
+                </div>
+              </div>
+            </div>
+
             {/* Example Quote Preview */}
             <div className="card bg-gradient-to-br from-gray-50 to-gray-100">
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">

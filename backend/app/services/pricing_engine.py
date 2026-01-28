@@ -33,7 +33,7 @@ class PricingEngine:
             total_volume += Decimal(str(item.volume_m3)) * item.quantity
         return total_volume
     
-    def calculate_labor_hours(
+    def calculate_man_hours(
         self, 
         volume: Decimal, 
         origin_floor: int = 0,
@@ -44,34 +44,41 @@ class PricingEngine:
         has_packing: bool = False
     ) -> Decimal:
         """
-        Calculate estimated labor hours based on volume and complexity
+        Calculate total MAN-HOURS based on volume and complexity.
+        This represents the total effort required across all workers.
         
-        Base formula: 
-        - ~1 hour per 10m³ for loading/unloading
-        - Add time for stairs (no elevator)
-        - Add time for disassembly/packing services
+        German market standard: ~0.1 to 0.15 hours per m³ per worker
         """
-        # Base time: 1 hour per 10m³
-        base_hours = volume / Decimal('10')
+        # Loading/Unloading effort (0.12h per m³)
+        base_man_hours = volume * Decimal('0.12')
         
-        # Stairs penalty (if no elevator)
-        stairs_hours = Decimal('0')
+        # Stairs penalty (if no elevator) - 0.2 man-hours per m³ per floor
+        stairs_effort = Decimal('0')
         if not origin_has_elevator and origin_floor > 0:
-            stairs_hours += Decimal(str(origin_floor)) * Decimal('0.3')  # 18min per floor
+            stairs_effort += Decimal(str(origin_floor)) * volume * Decimal('0.02')
         if not destination_has_elevator and destination_floor > 0:
-            stairs_hours += Decimal(str(destination_floor)) * Decimal('0.3')
+            stairs_effort += Decimal(str(destination_floor)) * volume * Decimal('0.02')
         
-        # Service adjustments
-        service_hours = Decimal('0')
+        # Service adjustments (Man-hours)
+        service_man_hours = Decimal('0')
         if has_disassembly:
-            service_hours += volume * Decimal('0.2')  # Extra 20% time for disassembly
+            service_man_hours += volume * Decimal('0.15')  # Extra 0.15h/m³
         if has_packing:
-            service_hours += volume * Decimal('0.3')  # Extra 30% time for packing
+            service_man_hours += volume * Decimal('0.25')  # Extra 0.25h/m³
         
-        total_hours = base_hours + stairs_hours + service_hours
+        total_man_hours = base_man_hours + stairs_effort + service_man_hours
         
-        # Minimum 2 hours
-        return max(total_hours, Decimal('2'))
+        # Minimum 4 man-hours (e.g., 2 people for 2 hours)
+        return max(total_man_hours, Decimal('4'))
+
+    def determine_crew_size(self, volume: Decimal) -> int:
+        """Determine appropriate crew size based on volume"""
+        if volume < 20:
+            return 2
+        elif volume < 45:
+            return 3
+        else:
+            return 4
     
     def calculate_distance_cost(self, distance_km: Decimal) -> Tuple[Decimal, Decimal]:
         """Calculate distance cost with tiered pricing"""
@@ -131,11 +138,11 @@ class PricingEngine:
                 max_cost += self.external_lift_cost_max
             
             elif service.service_type == "packing":
-                # Packing cost is volume-dependent, will be calculated separately
+                # Packing cost is volume-dependent, already in man-hours
                 pass
             
             elif service.service_type == "disassembly":
-                # Disassembly cost is item-dependent, will be calculated separately
+                # Disassembly cost is item-dependent, already in man-hours
                 pass
         
         return (min_cost, max_cost)
@@ -157,6 +164,7 @@ class PricingEngine:
         self,
         volume: Decimal,
         distance_km: Decimal,
+        travel_time_hours: Decimal = Decimal('0'),
         origin_floor: int = 0,
         destination_floor: int = 0,
         origin_has_elevator: bool = False,
@@ -164,12 +172,7 @@ class PricingEngine:
         services: List[Service] = None
     ) -> Dict[str, Any]:
         """
-        Generate complete quote with min/max pricing
-        
-        Returns: {
-            min_price, max_price, estimated_hours, volume_m3,
-            breakdown: {volume_cost, distance_cost, labor_cost, floor_surcharge, services_cost}
-        }
+        Generate complete quote with min/max pricing and precise duration
         """
         if services is None:
             services = []
@@ -178,49 +181,53 @@ class PricingEngine:
         has_disassembly = any(s.enabled and s.service_type == "disassembly" for s in services)
         has_packing = any(s.enabled and s.service_type == "packing" for s in services)
         
-        # Calculate components
-        estimated_hours = self.calculate_labor_hours(
+        # 1. Determine Crew Size
+        crew_size = self.determine_crew_size(volume)
+        
+        # 2. Calculate Labor (Man-Hours)
+        man_hours = self.calculate_man_hours(
             volume, origin_floor, destination_floor,
             origin_has_elevator, destination_has_elevator,
             has_disassembly, has_packing
         )
         
-        # Volume cost
+        # 3. Calculate Realistic Travel Time (Truck Factor 1.15)
+        truck_travel_time = travel_time_hours * Decimal('1.15')
+        
+        # Add mandatory break (45 mins if travel > 4.5h)
+        if truck_travel_time > Decimal('4.5'):
+            truck_travel_time += Decimal('0.75')
+        
+        # 4. Total Duration (Clock Time)
+        # Loading/Unloading time + Travel time
+        # We assume 1 truck, so travel time is added once.
+        loading_unloading_clock_time = man_hours / Decimal(str(crew_size))
+        total_clock_duration = loading_unloading_clock_time + truck_travel_time
+        
+        # 5. Costs
+        # Volume cost (Material/Truck wear/Admin)
         volume_cost_min = volume * self.base_rate_m3_min
         volume_cost_max = volume * self.base_rate_m3_max
         
-        # Distance cost
+        # Distance cost (Fuel/Maintenance)
         distance_cost_min, distance_cost_max = self.calculate_distance_cost(distance_km)
         
-        # Labor cost (hours × hourly rate × number of movers)
-        labor_cost_min = estimated_hours * self.hourly_labor_min * Decimal(str(self.min_movers))
-        labor_cost_max = estimated_hours * self.hourly_labor_max * Decimal(str(self.min_movers))
+        # Labor cost (Total Man-Hours × Rate)
+        # Note: Crew size is already accounted for in man_hours
+        labor_cost_min = man_hours * self.hourly_labor_min
+        labor_cost_max = man_hours * self.hourly_labor_max
         
-        # Base cost for floor surcharge calculation
-        base_cost = (volume_cost_min + distance_cost_min + labor_cost_min) / Decimal('2')
+        # Floor surcharge (Handling difficulty)
+        base_cost_for_surcharge = (volume_cost_min + labor_cost_min) / Decimal('2')
         floor_surcharge = self.calculate_floor_surcharge(
-            base_cost, origin_floor, destination_floor,
+            base_cost_for_surcharge, origin_floor, destination_floor,
             origin_has_elevator, destination_has_elevator
         )
         
         # Services cost
         services_cost_min, services_cost_max = self.calculate_services_cost(services)
         
-        # Packing service cost (based on volume)
-        if has_packing:
-            packing_cost_min = volume * Decimal('15')  # €15-25 per m³ for packing
-            packing_cost_max = volume * Decimal('25')
-            services_cost_min += packing_cost_min
-            services_cost_max += packing_cost_max
-        
-        # Disassembly service cost (based on volume/complexity)
-        if has_disassembly:
-            disassembly_cost_min = volume * Decimal('8')  # €8-15 per m³
-            disassembly_cost_max = volume * Decimal('15')
-            services_cost_min += disassembly_cost_min
-            services_cost_max += disassembly_cost_max
-        
-        # Total
+        # 6. Total Price
         min_price = volume_cost_min + distance_cost_min + labor_cost_min + floor_surcharge + services_cost_min
         max_price = volume_cost_max + distance_cost_max + labor_cost_max + floor_surcharge + services_cost_max
         
@@ -235,10 +242,13 @@ class PricingEngine:
         return {
             "min_price": round(min_price, 2),
             "max_price": round(max_price, 2),
-            "estimated_hours": round(estimated_hours, 1),
+            "estimated_hours": round(total_clock_duration, 1),
             "volume_m3": round(volume, 2),
             "distance_km": round(distance_km, 2),
             "breakdown": {
+                "man_hours": round(man_hours, 1),
+                "crew_size": crew_size,
+                "travel_time": round(truck_travel_time, 1),
                 "volume_cost": {
                     "min": round(volume_cost_min, 2),
                     "max": round(volume_cost_max, 2)
