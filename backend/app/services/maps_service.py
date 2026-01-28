@@ -146,8 +146,17 @@ class MapsService:
             distance_km = Decimal(str(distance_m / 1000))
             
             # Duration in seconds, convert to hours
-            duration_s = element['duration']['value']
-            duration_hours = Decimal(str(duration_s / 3600))
+            duration_s = element.get('duration', {}).get('value')
+            if duration_s is not None:
+                duration_hours = Decimal(str(duration_s / 3600))
+            else:
+                duration_hours = None
+            
+            # Safety fallback: If we have distance but no duration (or 0 duration), 
+            # calculate a realistic heuristic (75 km/h baseline)
+            if distance_km > 0 and (not duration_hours or duration_hours < Decimal('0.1')):
+                logger.warning(f"MapsService: Missing or invalid duration for {distance_km}km. Using heuristic fallback.")
+                duration_hours = distance_km / Decimal('75')
             
             data = {
                 'distance_km': distance_km,

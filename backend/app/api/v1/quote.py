@@ -6,6 +6,9 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 from typing import List, Any
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.schemas.quote import (
@@ -94,6 +97,7 @@ async def calculate_quote(
         )
     
     # Calculate quote
+    logger.info(f"CALCULATE_QUOTE: Volume={volume}, Distance={distance_km}, Duration={duration_hours}")
     quote_data = pricing_engine.generate_quote(
         volume=volume,
         distance_km=distance_km,
@@ -105,6 +109,7 @@ async def calculate_quote(
         services=request.services or []
     )
     
+    logger.info(f"CALCULATE_QUOTE_RESULT: Estimated Hours={quote_data['estimated_hours']}")
     return QuoteCalculateResponse(**quote_data)
 
 

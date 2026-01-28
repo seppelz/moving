@@ -2,11 +2,13 @@
 Pricing calculation engine for MoveMaster
 Implements German market pricing logic with smart defaults
 """
+import logging
 from decimal import Decimal
 from typing import List, Dict, Any, Tuple
 from app.core.config import settings
 from app.schemas.quote import InventoryItem, Service, Address
 
+logger = logging.getLogger(__name__)
 
 class PricingEngine:
     """Core pricing calculation engine"""
@@ -46,13 +48,11 @@ class PricingEngine:
         """
         Calculate total MAN-HOURS based on volume and complexity.
         This represents the total effort required across all workers.
-        
-        German market standard: ~0.1 to 0.15 hours per m³ per worker
         """
         # Loading/Unloading effort (0.12h per m³)
         base_man_hours = volume * Decimal('0.12')
         
-        # Stairs penalty (if no elevator) - 0.2 man-hours per m³ per floor
+        # Stairs penalty (if no elevator) - 0.02 man-hours per m³ per floor
         stairs_effort = Decimal('0')
         if not origin_has_elevator and origin_floor > 0:
             stairs_effort += Decimal(str(origin_floor)) * volume * Decimal('0.02')
@@ -68,7 +68,7 @@ class PricingEngine:
         
         total_man_hours = base_man_hours + stairs_effort + service_man_hours
         
-        # Minimum 4 man-hours (e.g., 2 people for 2 hours)
+        # Minimum 4 man-hours (standard industry baseline)
         return max(total_man_hours, Decimal('4'))
 
     def determine_crew_size(self, volume: Decimal) -> int:
@@ -101,65 +101,33 @@ class PricingEngine:
     ) -> Decimal:
         """Calculate floor surcharge for moves without elevator"""
         surcharge = Decimal('0')
-        
-        # Origin surcharge (only for floors > 2 without elevator)
         if not origin_has_elevator and origin_floor > 2:
-            floors_above_2 = origin_floor - 2
-            surcharge += base_cost * self.floor_surcharge_percent * Decimal(str(floors_above_2))
-        
-        # Destination surcharge
+            surcharge += base_cost * self.floor_surcharge_percent * Decimal(str(origin_floor - 2))
         if not destination_has_elevator and destination_floor > 2:
-            floors_above_2 = destination_floor - 2
-            surcharge += base_cost * self.floor_surcharge_percent * Decimal(str(floors_above_2))
-        
+            surcharge += base_cost * self.floor_surcharge_percent * Decimal(str(destination_floor - 2))
         return surcharge
     
     def calculate_services_cost(self, services: List[Service]) -> Tuple[Decimal, Decimal]:
         """Calculate cost for additional services"""
         min_cost = Decimal('0')
         max_cost = Decimal('0')
-        
         for service in services:
-            if not service.enabled:
-                continue
-            
+            if not service.enabled: continue
             if service.service_type == "hvz_permit":
                 min_cost += self.hvz_permit_cost
                 max_cost += self.hvz_permit_cost
-            
             elif service.service_type == "kitchen_assembly":
                 meters = Decimal(str(service.metadata.get("kitchen_meters", 0)))
-                cost = meters * self.kitchen_assembly_per_meter
-                min_cost += cost
-                max_cost += cost
-            
+                min_cost += meters * self.kitchen_assembly_per_meter
+                max_cost += meters * self.kitchen_assembly_per_meter
             elif service.service_type == "external_lift":
                 min_cost += self.external_lift_cost_min
                 max_cost += self.external_lift_cost_max
-            
-            elif service.service_type == "packing":
-                # Packing cost is volume-dependent, already in man-hours
-                pass
-            
-            elif service.service_type == "disassembly":
-                # Disassembly cost is item-dependent, already in man-hours
-                pass
-        
         return (min_cost, max_cost)
     
-    def should_suggest_external_lift(
-        self,
-        floor: int,
-        has_elevator: bool,
-        volume: Decimal
-    ) -> bool:
-        """Determine if external lift should be suggested"""
-        if floor > 4 and not has_elevator:
-            return True
-        if volume > Decimal('50') and floor > 2 and not has_elevator:
-            return True
-        return False
-    
+    def should_suggest_external_lift(self, floor: int, has_elevator: bool, volume: Decimal) -> bool:
+        return (floor > 4 and not has_elevator) or (volume > Decimal('50') and floor > 2 and not has_elevator)
+
     def generate_quote(
         self,
         volume: Decimal,
@@ -171,108 +139,55 @@ class PricingEngine:
         destination_has_elevator: bool = False,
         services: List[Service] = None
     ) -> Dict[str, Any]:
-        """
-        Generate complete quote with min/max pricing and precise duration
-        """
-        if services is None:
-            services = []
-        
-        # Check for service flags
-        has_disassembly = any(s.enabled and s.service_type == "disassembly" for s in services)
-        has_packing = any(s.enabled and s.service_type == "packing" for s in services)
-        
-        # 1. Determine Crew Size
+        """Generate complete quote with min/max pricing and precise duration"""
+        services = services or []
         crew_size = self.determine_crew_size(volume)
-        
-        # 2. Calculate Labor (Man-Hours)
         man_hours = self.calculate_man_hours(
             volume, origin_floor, destination_floor,
             origin_has_elevator, destination_has_elevator,
-            has_disassembly, has_packing
+            any(s.enabled and s.service_type == "disassembly" for s in services),
+            any(s.enabled and s.service_type == "packing" for s in services)
         )
         
-        # 3. Calculate Realistic Travel Time (Truck Factor 1.15)
+        # Truck speed factor (1.15x slower than car)
         truck_travel_time = travel_time_hours * Decimal('1.15')
-        
-        # Add mandatory break (45 mins if travel > 4.5h)
         if truck_travel_time > Decimal('4.5'):
-            truck_travel_time += Decimal('0.75')
+            truck_travel_time += Decimal('0.75') # Mandatory break
+            
+        loading_time = man_hours / Decimal(str(crew_size))
+        total_duration = loading_time + truck_travel_time
         
-        # 4. Total Duration (Clock Time)
-        # Loading/Unloading time + Travel time
-        # We assume 1 truck, so travel time is added once.
-        loading_unloading_clock_time = man_hours / Decimal(str(crew_size))
-        total_clock_duration = loading_unloading_clock_time + truck_travel_time
+        # Detailed internal logging for troubleshooting
+        logger.info(f"GENERATE_QUOTE: Vol={volume}, Dist={distance_km}, RawTravel={travel_time_hours}, Crew={crew_size}, ManHours={man_hours}, FinalDuration={total_duration}")
         
-        # 5. Costs
-        # Volume cost (Material/Truck wear/Admin)
         volume_cost_min = volume * self.base_rate_m3_min
         volume_cost_max = volume * self.base_rate_m3_max
-        
-        # Distance cost (Fuel/Maintenance)
-        distance_cost_min, distance_cost_max = self.calculate_distance_cost(distance_km)
-        
-        # Labor cost (Total Man-Hours × Rate)
-        # Note: Crew size is already accounted for in man_hours
-        labor_cost_min = man_hours * self.hourly_labor_min
-        labor_cost_max = man_hours * self.hourly_labor_max
-        
-        # Floor surcharge (Handling difficulty)
-        base_cost_for_surcharge = (volume_cost_min + labor_cost_min) / Decimal('2')
-        floor_surcharge = self.calculate_floor_surcharge(
-            base_cost_for_surcharge, origin_floor, destination_floor,
-            origin_has_elevator, destination_has_elevator
-        )
-        
-        # Services cost
-        services_cost_min, services_cost_max = self.calculate_services_cost(services)
-        
-        # 6. Total Price
-        min_price = volume_cost_min + distance_cost_min + labor_cost_min + floor_surcharge + services_cost_min
-        max_price = volume_cost_max + distance_cost_max + labor_cost_max + floor_surcharge + services_cost_max
-        
-        # Suggestions
-        suggest_external_lift_origin = self.should_suggest_external_lift(
-            origin_floor, origin_has_elevator, volume
-        )
-        suggest_external_lift_dest = self.should_suggest_external_lift(
-            destination_floor, destination_has_elevator, volume
-        )
+        dist_min, dist_max = self.calculate_distance_cost(distance_km)
+        labor_min = man_hours * self.hourly_labor_min
+        labor_max = man_hours * self.hourly_labor_max
+        floor_surcharge = self.calculate_floor_surcharge((volume_cost_min + labor_min)/2, origin_floor, destination_floor, origin_has_elevator, destination_has_elevator)
+        serv_min, serv_max = self.calculate_services_cost(services)
         
         return {
-            "min_price": round(min_price, 2),
-            "max_price": round(max_price, 2),
-            "estimated_hours": round(total_clock_duration, 1),
+            "min_price": round(volume_cost_min + dist_min + labor_min + floor_surcharge + serv_min, 2),
+            "max_price": round(volume_cost_max + dist_max + labor_max + floor_surcharge + serv_max, 2),
+            "estimated_hours": round(total_duration, 1),
             "volume_m3": round(volume, 2),
             "distance_km": round(distance_km, 2),
             "breakdown": {
                 "man_hours": round(man_hours, 1),
                 "crew_size": crew_size,
                 "travel_time": round(truck_travel_time, 1),
-                "volume_cost": {
-                    "min": round(volume_cost_min, 2),
-                    "max": round(volume_cost_max, 2)
-                },
-                "distance_cost": {
-                    "min": round(distance_cost_min, 2),
-                    "max": round(distance_cost_max, 2)
-                },
-                "labor_cost": {
-                    "min": round(labor_cost_min, 2),
-                    "max": round(labor_cost_max, 2)
-                },
+                "volume_cost": {"min": round(volume_cost_min, 2), "max": round(volume_cost_max, 2)},
+                "distance_cost": {"min": round(dist_min, 2), "max": round(dist_max, 2)},
+                "labor_cost": {"min": round(labor_min, 2), "max": round(labor_max, 2)},
                 "floor_surcharge": round(floor_surcharge, 2),
-                "services_cost": {
-                    "min": round(services_cost_min, 2),
-                    "max": round(services_cost_max, 2)
-                }
+                "services_cost": {"min": round(serv_min, 2), "max": round(serv_max, 2)}
             },
             "suggestions": {
-                "external_lift_origin": suggest_external_lift_origin,
-                "external_lift_destination": suggest_external_lift_dest
+                "external_lift_origin": self.should_suggest_external_lift(origin_floor, origin_has_elevator, volume),
+                "external_lift_destination": self.should_suggest_external_lift(destination_floor, destination_has_elevator, volume)
             }
         }
 
-
-# Singleton instance
 pricing_engine = PricingEngine()
