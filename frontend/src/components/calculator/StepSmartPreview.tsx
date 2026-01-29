@@ -4,9 +4,9 @@
  */
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Sparkles, ArrowRight, ArrowLeft, Package, CheckCircle, 
-  Edit3, TrendingUp, TrendingDown, Users
+import {
+  Sparkles, ArrowRight, ArrowLeft, Package, CheckCircle,
+  Edit3, TrendingUp, TrendingDown, Users, Lightbulb, Square, CheckSquare
 } from 'lucide-react'
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'
@@ -30,11 +30,11 @@ export default function StepSmartPreview() {
     setStep,
     setInventoryFromPrediction,
   } = useCalculatorStore()
-  
+
   const [prediction, setPrediction] = useState<SmartPrediction | null>(null)
   const [loading, setLoading] = useState(true)
   const [showAdjustments, setShowAdjustments] = useState(false)
-  
+
   // Adjustment states
   const [furnitureLevel, setFurnitureLevel] = useState(0) // -2 to +2
   const [boxCount, setBoxCount] = useState(0)
@@ -43,25 +43,25 @@ export default function StepSmartPreview() {
   const [kitchenMeters, setKitchenMeters] = useState(0)
   const [hasLargePlants, setHasLargePlants] = useState(false)
   const [bicycleCount, setBicycleCount] = useState(0)
-  
+
   const [adjustedVolume, setAdjustedVolume] = useState<number | null>(null)
-  
+
   useEffect(() => {
     loadPrediction()
   }, [])
-  
+
   useEffect(() => {
     if (prediction) {
       setBoxCount(prediction.typical_boxes)
     }
   }, [prediction])
-  
+
   const loadPrediction = async () => {
     if (!smartProfile) {
       setStep(2)
       return
     }
-    
+
     setLoading(true)
     try {
       const result = await quoteAPI.getSmartPrediction(smartProfile)
@@ -72,10 +72,10 @@ export default function StepSmartPreview() {
       setLoading(false)
     }
   }
-  
+
   const applyAdjustments = async () => {
     if (!prediction) return
-    
+
     try {
       const result = await quoteAPI.applyQuickAdjustment({
         profile_key: prediction.profile_key,
@@ -87,42 +87,42 @@ export default function StepSmartPreview() {
         has_large_plants: hasLargePlants,
         bicycle_count: bicycleCount,
       })
-      
+
       setAdjustedVolume(result.adjusted_volume_m3)
     } catch (error) {
       console.error('Failed to apply adjustments:', error)
     }
   }
-  
+
   useEffect(() => {
     if (showAdjustments) {
       applyAdjustments()
     }
   }, [
-    furnitureLevel, boxCount, hasWashingMachine, hasMountedKitchen, 
+    furnitureLevel, boxCount, hasWashingMachine, hasMountedKitchen,
     kitchenMeters, hasLargePlants, bicycleCount, showAdjustments
   ])
-  
+
   const handleConfirm = () => {
     if (!prediction) return
-    
+
     // Convert prediction to inventory format and go directly to services
     setInventoryFromPrediction(prediction.typical_items)
-    
+
     // Skip inventory step, go to services
     setStep(4)
   }
-  
+
   const handleDetailedMode = () => {
     if (!prediction) return
-    
+
     // Convert prediction to inventory format
     setInventoryFromPrediction(prediction.typical_items)
-    
+
     // Go to inventory step for manual review/editing
     setStep(5)
   }
-  
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -138,7 +138,7 @@ export default function StepSmartPreview() {
       </div>
     )
   }
-  
+
   if (!prediction) {
     return (
       <div className="max-w-4xl mx-auto">
@@ -151,10 +151,10 @@ export default function StepSmartPreview() {
       </div>
     )
   }
-  
+
   const displayVolume = adjustedVolume || prediction.predicted_volume_m3
   const [minVolume, maxVolume] = prediction.volume_range
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -178,11 +178,12 @@ export default function StepSmartPreview() {
           <p className="text-gray-600">
             {prediction.persona_description}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            💡 Basierend auf typischen {smartProfile?.apartment_size === '2br' ? '2-Zimmer' : smartProfile?.apartment_size === '3br' ? '3-Zimmer' : smartProfile?.apartment_size === '1br' ? '1-Zimmer' : ''} Haushalten
+          <p className="text-sm text-gray-500 mt-2 flex items-center justify-center gap-1">
+            <Lightbulb className="w-3 h-3 text-primary-600" />
+            Basierend auf typischen {smartProfile?.apartment_size === '2br' ? '2-Zimmer' : smartProfile?.apartment_size === '3br' ? '3-Zimmer' : smartProfile?.apartment_size === '1br' ? '1-Zimmer' : ''} Haushalten
           </p>
         </div>
-        
+
         {/* Volume Estimate Card */}
         <div className="bg-gradient-to-br from-primary-600 to-purple-600 text-white p-8 rounded-2xl mb-8">
           <div className="text-center">
@@ -198,7 +199,7 @@ export default function StepSmartPreview() {
             <div className="text-xs opacity-70 mb-4">
               Circa {prediction.typical_boxes} Umzugskartons
             </div>
-            
+
             {/* Confidence Score */}
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
               <Sparkles className="w-4 h-4" />
@@ -208,7 +209,7 @@ export default function StepSmartPreview() {
             </div>
           </div>
         </div>
-        
+
         {/* Room Breakdown */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
@@ -217,7 +218,7 @@ export default function StepSmartPreview() {
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {Object.entries(prediction.breakdown).map(([room, volume]) => (
-              <div 
+              <div
                 key={room}
                 className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200"
               >
@@ -239,7 +240,7 @@ export default function StepSmartPreview() {
             </div>
           </div>
         </div>
-        
+
         {/* Quick Adjustments Toggle */}
         {!showAdjustments ? (
           <button
@@ -261,7 +262,7 @@ export default function StepSmartPreview() {
               <Edit3 className="w-5 h-5" />
               Anpassungen
             </h3>
-            
+
             <div className="space-y-6">
               {/* Furniture Level Slider */}
               <div>
@@ -293,7 +294,7 @@ export default function StepSmartPreview() {
                   </span>
                 </div>
               </div>
-              
+
               {/* Box Count */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -313,7 +314,7 @@ export default function StepSmartPreview() {
                   <span>80+</span>
                 </div>
               </div>
-              
+
               {/* Quick Toggles */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -330,9 +331,12 @@ export default function StepSmartPreview() {
                       }
                     )}
                   >
-                    □ Waschmaschine {hasWashingMachine && '(+0.8 m³)'}
+                    <div className="flex items-center gap-2">
+                      {hasWashingMachine ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-gray-400" />}
+                      Waschmaschine {hasWashingMachine && '(+0.8 m³)'}
+                    </div>
                   </button>
-                  
+
                   <button
                     onClick={() => setHasMountedKitchen(!hasMountedKitchen)}
                     className={clsx(
@@ -343,9 +347,12 @@ export default function StepSmartPreview() {
                       }
                     )}
                   >
-                    □ Montierte Küche
+                    <div className="flex items-center gap-2">
+                      {hasMountedKitchen ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-gray-400" />}
+                      Montierte Küche
+                    </div>
                   </button>
-                  
+
                   {hasMountedKitchen && (
                     <div className="ml-4 mt-2">
                       <label className="block text-sm text-gray-600 mb-2">
@@ -365,7 +372,7 @@ export default function StepSmartPreview() {
                       </div>
                     </div>
                   )}
-                  
+
                   <button
                     onClick={() => setHasLargePlants(!hasLargePlants)}
                     className={clsx(
@@ -376,11 +383,14 @@ export default function StepSmartPreview() {
                       }
                     )}
                   >
-                    □ Große Pflanzen (3+) {hasLargePlants && '(+2.0 m³)'}
+                    <div className="flex items-center gap-2">
+                      {hasLargePlants ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-gray-400" />}
+                      Große Pflanzen (3+) {hasLargePlants && '(+2.0 m³)'}
+                    </div>
                   </button>
                 </div>
               </div>
-              
+
               {/* Bicycle Count */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -405,7 +415,7 @@ export default function StepSmartPreview() {
                 </div>
               </div>
             </div>
-            
+
             {adjustedVolume && (
               <div className="mt-6 bg-white rounded-lg p-4 border-2 border-primary-200">
                 <div className="text-sm text-gray-600 mb-1">Angepasste Schätzung:</div>
@@ -414,7 +424,7 @@ export default function StepSmartPreview() {
                 </div>
               </div>
             )}
-            
+
             <button
               onClick={() => setShowAdjustments(false)}
               className="w-full mt-4 text-center text-sm text-gray-600 hover:text-gray-900"
@@ -423,21 +433,24 @@ export default function StepSmartPreview() {
             </button>
           </motion.div>
         )}
-        
+
         {/* Info Box */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-3">
             <Users className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <div className="text-sm text-blue-800">
-              <p>
-                <strong>💡 Hinweis:</strong> Diese Volumen-Schätzung basiert auf typischen deutschen Haushalten
-                und erreicht erfahrungsgemäß 85-95% Genauigkeit. Sie können die Schätzung bei Bedarf anpassen 
-                oder später die Möbelliste prüfen und bearbeiten.
+              <p className="flex gap-1.5">
+                <Lightbulb className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <span>
+                  <strong>Hinweis:</strong> Diese Volumen-Schätzung basiert auf typischen deutschen Haushalten
+                  und erreicht erfahrungsgemäß 85-95% Genauigkeit. Sie können die Schätzung bei Bedarf anpassen
+                  oder später die Möbelliste prüfen und bearbeiten.
+                </span>
               </p>
             </div>
           </div>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
@@ -447,7 +460,7 @@ export default function StepSmartPreview() {
             <ArrowRight className="w-5 h-5" />
             Weiter zu Services
           </button>
-          
+
           <button
             onClick={handleDetailedMode}
             className="btn-secondary w-full flex items-center justify-center gap-2"
@@ -455,7 +468,7 @@ export default function StepSmartPreview() {
             <Edit3 className="w-5 h-5" />
             Möbelliste anpassen
           </button>
-          
+
           <button
             onClick={() => setStep(2)}
             className="w-full text-center text-sm text-gray-600 hover:text-gray-900 py-2"
