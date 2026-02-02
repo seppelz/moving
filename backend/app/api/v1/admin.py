@@ -8,12 +8,16 @@ from sqlalchemy import func, desc
 from typing import List, Optional
 from datetime import datetime, timedelta
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.models.quote import Quote, QuoteStatus
 from app.models.company import Company
 from app.schemas.quote import QuoteResponse
 from app.services.pdf_service import pdf_service
+from app.services.email_service import email_service
 
 router = APIRouter()
 
@@ -139,11 +143,25 @@ async def update_quote_status(
             detail="Quote not found"
         )
     
+    old_status = quote.status
     quote.status = new_status
     quote.updated_at = datetime.utcnow()
     
     db.commit()
     db.refresh(quote)
+    
+    # Trigger email based on status transition
+    if new_status == QuoteStatus.SENT and old_status != QuoteStatus.SENT:
+        try:
+            email_service.send_quote_confirmation(
+                to_email=quote.customer_email,
+                customer_name=quote.customer_name,
+                quote_id=str(quote.id),
+                min_price=float(quote.min_price),
+                max_price=float(quote.max_price)
+            )
+        except Exception as e:
+            logger.error(f"Failed to trigger email confirmation on status change: {e}")
     
     return {"success": True, "quote_id": quote_id, "new_status": new_status}
 

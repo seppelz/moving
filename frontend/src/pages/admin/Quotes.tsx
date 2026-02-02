@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Download, ChevronLeft, FileText, Eye } from 'lucide-react'
+import { Search, Download, ChevronLeft, FileText, Eye, Send, Check } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote, QuoteStatus } from '@/types'
 
@@ -12,11 +12,11 @@ export default function AdminQuotes() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<QuoteStatus | ''>('')
   const [searchTerm, setSearchTerm] = useState('')
-  
+
   useEffect(() => {
     loadQuotes()
   }, [statusFilter])
-  
+
   const loadQuotes = async () => {
     setLoading(true)
     try {
@@ -31,7 +31,7 @@ export default function AdminQuotes() {
       setLoading(false)
     }
   }
-  
+
   const handleStatusChange = async (quoteId: string, newStatus: string) => {
     try {
       await adminAPI.updateQuoteStatus(quoteId, newStatus)
@@ -41,7 +41,7 @@ export default function AdminQuotes() {
       console.error('Failed to update status:', error)
     }
   }
-  
+
   const handleDownloadPDF = async (quoteId: string) => {
     try {
       await adminAPI.downloadQuotePDF(quoteId)
@@ -50,7 +50,7 @@ export default function AdminQuotes() {
       alert('Fehler beim Erstellen des PDFs')
     }
   }
-  
+
   const filteredQuotes = quotes.filter((quote) => {
     if (!searchTerm) return true
     const search = searchTerm.toLowerCase()
@@ -61,7 +61,7 @@ export default function AdminQuotes() {
       quote.destination_address.postal_code.includes(search)
     )
   })
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -85,7 +85,7 @@ export default function AdminQuotes() {
           </div>
         </div>
       </header>
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Filters */}
         <div className="card mb-6">
@@ -101,7 +101,7 @@ export default function AdminQuotes() {
                 className="input-field pl-10"
               />
             </div>
-            
+
             {/* Status Filter */}
             <div className="md:w-48">
               <select
@@ -119,7 +119,7 @@ export default function AdminQuotes() {
             </div>
           </div>
         </div>
-        
+
         {/* Quotes Table */}
         <div className="card">
           {loading ? (
@@ -152,9 +152,6 @@ export default function AdminQuotes() {
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Status
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Datum
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Aktionen
@@ -190,54 +187,50 @@ export default function AdminQuotes() {
                         €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <select
-                          value={quote.status}
-                          onChange={(e) => handleStatusChange(quote.id, e.target.value)}
-                          className="text-sm rounded-full px-3 py-1 border-0 font-medium cursor-pointer"
-                          style={{
-                            backgroundColor:
-                              quote.status === 'accepted'
-                                ? '#dcfce7'
-                                : quote.status === 'sent'
-                                ? '#dbeafe'
-                                : quote.status === 'rejected'
-                                ? '#fee2e2'
-                                : '#f3f4f6',
-                            color:
-                              quote.status === 'accepted'
-                                ? '#166534'
-                                : quote.status === 'sent'
-                                ? '#1e40af'
-                                : quote.status === 'rejected'
-                                ? '#991b1b'
-                                : '#374151',
-                          }}
-                        >
-                          <option value="draft">Entwurf</option>
-                          <option value="sent">Gesendet</option>
-                          <option value="accepted">Akzeptiert</option>
-                          <option value="rejected">Abgelehnt</option>
-                          <option value="expired">Abgelaufen</option>
-                        </select>
+                        <StatusBadge status={quote.status} />
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500">
                         {new Date(quote.created_at).toLocaleDateString('de-DE')}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Primary Context Actions */}
+                          {quote.status === 'draft' && (
+                            <button
+                              onClick={() => handleStatusChange(quote.id, 'sent')}
+                              className="text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1 text-xs bg-blue-50 px-2 py-1 rounded"
+                              title="Dieses Angebot an den Kunden per E-Mail senden"
+                            >
+                              <Send className="w-3 h-3" />
+                              An Kunden senden
+                            </button>
+                          )}
+                          {quote.status === 'sent' && (
+                            <button
+                              onClick={() => handleStatusChange(quote.id, 'accepted')}
+                              className="text-green-600 hover:text-green-700 font-medium inline-flex items-center gap-1 text-xs bg-green-50 px-2 py-1 rounded"
+                            >
+                              <Check className="w-3 h-3" />
+                              Akzeptiert
+                            </button>
+                          )}
+
+                          {/* Secondary Tools */}
+                          <div className="h-4 w-px bg-gray-200 mx-1"></div>
+
                           <button
                             onClick={() => handleDownloadPDF(quote.id)}
-                            className="text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1"
+                            className="text-gray-600 hover:text-primary-600 font-medium inline-flex items-center gap-1 text-xs"
                             title="PDF herunterladen"
                           >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="w-3 h-3" />
                             PDF
                           </button>
                           <Link
                             to={`/admin/quotes/${quote.id}`}
-                            className="text-gray-600 hover:text-gray-900 font-medium inline-flex items-center gap-1"
+                            className="text-gray-600 hover:text-gray-900 font-medium inline-flex items-center gap-1 text-xs"
                           >
-                            <Eye className="w-4 h-4" />
+                            <Eye className="w-3 h-3" />
                             Details
                           </Link>
                         </div>
@@ -251,5 +244,29 @@ export default function AdminQuotes() {
         </div>
       </main>
     </div>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-700',
+    sent: 'bg-blue-100 text-blue-700',
+    accepted: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+    expired: 'bg-orange-100 text-orange-700',
+  }
+
+  const translations: Record<string, string> = {
+    draft: 'Entwurf',
+    sent: 'Gesendet',
+    accepted: 'Akzeptiert',
+    rejected: 'Abgelehnt',
+    expired: 'Abgelaufen',
+  }
+
+  return (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status] || styles.draft}`}>
+      {translations[status] || status}
+    </span>
   )
 }

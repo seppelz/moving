@@ -8,6 +8,9 @@ from email.mime.application import MIMEApplication
 from typing import Optional
 from app.core.config import settings
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -23,7 +26,7 @@ class EmailService:
     def _create_connection(self):
         """Create SMTP connection"""
         if not self.smtp_user or not self.smtp_password:
-            print("SMTP not configured, email will be logged only")
+            logger.warning("SMTP not configured, email will be logged only")
             return None
         
         try:
@@ -32,7 +35,7 @@ class EmailService:
             server.login(self.smtp_user, self.smtp_password)
             return server
         except Exception as e:
-            print(f"Failed to connect to SMTP: {e}")
+            logger.error(f"Failed to connect to SMTP: {e}")
             return None
     
     def send_quote_confirmation(
@@ -282,16 +285,16 @@ class EmailService:
             try:
                 server.send_message(msg)
                 server.quit()
-                print(f"✓ Email sent to {to_email}")
+                logger.info(f"✓ Email sent to {to_email}")
                 return True
             except Exception as e:
-                print(f"✗ Failed to send email: {e}")
+                logger.error(f"✗ Failed to send email: {e}")
                 return False
         else:
             # Log email if SMTP not configured (development)
-            print(f"[EMAIL LOG] To: {to_email}")
-            print(f"[EMAIL LOG] Subject: {subject}")
-            print(f"[EMAIL LOG] Body preview: {html_body[:200]}...")
+            logger.info(f"[EMAIL LOG] To: {to_email}")
+            logger.info(f"[EMAIL LOG] Subject: {subject}")
+            logger.info(f"[EMAIL LOG] Body preview: {html_body[:200]}...")
             return True
 
 

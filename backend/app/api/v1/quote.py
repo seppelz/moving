@@ -22,6 +22,7 @@ from app.schemas.quote import (
 )
 from app.services.pricing_engine import pricing_engine
 from app.services.maps_service import maps_service
+from app.services.email_service import email_service
 from app.models.quote import Quote, QuoteStatus
 from app.models.company import Company
 from app.models.item_template import ItemTemplate
@@ -189,6 +190,19 @@ async def submit_quote(
     db.add(quote)
     db.commit()
     db.refresh(quote)
+    
+    # Send confirmation email
+    try:
+        email_service.send_quote_confirmation(
+            to_email=quote.customer_email,
+            customer_name=quote.customer_name,
+            quote_id=str(quote.id),
+            min_price=float(quote.min_price),
+            max_price=float(quote.max_price)
+        )
+    except Exception as e:
+        logger.error(f"Failed to trigger email confirmation: {e}")
+        # We don't fail the request if email fails
     
     # Return response
     return QuoteResponse(

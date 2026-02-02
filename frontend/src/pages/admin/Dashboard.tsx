@@ -3,7 +3,7 @@
  */
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BarChart3, TrendingUp, Users, Euro, FileText, ArrowRight, Download } from 'lucide-react'
+import { BarChart3, TrendingUp, Users, Euro, FileText, ArrowRight, Download, Send, CheckCircle } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote } from '@/types'
 
@@ -21,11 +21,11 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [recentQuotes, setRecentQuotes] = useState<Quote[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   useEffect(() => {
     loadData()
   }, [])
-  
+
   const loadData = async () => {
     try {
       const [analyticsData, quotesData] = await Promise.all([
@@ -40,7 +40,7 @@ export default function AdminDashboard() {
       setLoading(false)
     }
   }
-  
+
   const handleDownloadPDF = async (quoteId: string) => {
     try {
       await adminAPI.downloadQuotePDF(quoteId)
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
       alert('Fehler beim Erstellen des PDFs')
     }
   }
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
       </div>
     )
   }
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </header>
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -120,63 +120,74 @@ export default function AdminDashboard() {
             color="orange"
           />
         </div>
-        
+
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Status Distribution */}
+          {/* Conversion Funnel */}
           <div className="card">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              Angebote nach Status
+            <h2 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-primary-600" />
+              Conversion Funnel
             </h2>
-            <div className="space-y-3">
-              {analytics?.quotes_by_status && Object.entries(analytics.quotes_by_status).map(([status, count]) => (
-                <div key={status}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-gray-700 capitalize">
-                      {translateStatus(status)}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-900">{count}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-primary-600 h-2 rounded-full"
-                      style={{
-                        width: `${(count / (analytics?.total_quotes || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-6">
+              <FunnelStep
+                label="Angebote Erstellt"
+                count={analytics?.total_quotes || 0}
+                percent={100}
+                color="bg-gray-400"
+                icon={<FileText className="w-4 h-4" />}
+              />
+              <FunnelStep
+                label="Angebote Gesendet"
+                count={analytics?.quotes_by_status?.sent || 0}
+                percent={analytics?.total_quotes ? ((analytics.quotes_by_status.sent || 0) / analytics.total_quotes) * 100 : 0}
+                color="bg-blue-500"
+                icon={<Send className="w-4 h-4" />}
+              />
+              <FunnelStep
+                label="Angebote Akzeptiert"
+                count={analytics?.quotes_by_status?.accepted || 0}
+                percent={analytics?.conversion_rate || 0}
+                color="bg-green-500"
+                icon={<CheckCircle className="w-4 h-4" />}
+                isSuccess
+              />
             </div>
           </div>
-          
-          {/* Key Metrics */}
+
+          {/* Status Breakdown & KPIs */}
           <div className="card">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Wichtige Kennzahlen
+              Effizienz & Volumen
             </h2>
             <div className="space-y-4">
               <MetricRow
                 label="Durchschn. Volumen"
                 value={`${analytics?.average_volume_m3.toFixed(1) || 0} m³`}
+                icon={<BarChart3 className="w-4 h-4 text-gray-400" />}
               />
               <MetricRow
-                label="Erfolgreich abgeschlossen"
-                value={analytics?.quotes_by_status?.accepted || 0}
+                label="Durchschn. Angebotswert"
+                value={`€${Math.round(analytics?.average_quote_value || 0)}`}
+                icon={<Euro className="w-4 h-4 text-gray-400" />}
               />
-              <MetricRow
-                label="In Bearbeitung"
-                value={analytics?.quotes_by_status?.sent || 0}
-              />
-              <MetricRow
-                label="Entwürfe"
-                value={analytics?.quotes_by_status?.draft || 0}
-              />
+              <div className="pt-4 border-t border-gray-100 mt-4">
+                <h3 className="text-xs font-bold text-gray-500 uppercase mb-3">Zusammenfassung</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-xs text-gray-500">In Bearbeitung</div>
+                    <div className="text-lg font-bold text-blue-600">{analytics?.quotes_by_status?.sent || 0}</div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-xs text-gray-500">Abgeschlossen</div>
+                    <div className="text-lg font-bold text-green-600">{analytics?.quotes_by_status?.accepted || 0}</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        
+
         {/* Recent Quotes */}
         <div className="card">
           <div className="flex items-center justify-between mb-6">
@@ -191,7 +202,7 @@ export default function AdminDashboard() {
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
@@ -273,7 +284,7 @@ function StatCard({ icon, label, value, color }: StatCardProps) {
     purple: 'bg-purple-100 text-purple-600',
     orange: 'bg-orange-100 text-orange-600',
   }
-  
+
   return (
     <div className="card">
       <div className="flex items-center gap-4">
@@ -289,11 +300,53 @@ function StatCard({ icon, label, value, color }: StatCardProps) {
   )
 }
 
-function MetricRow({ label, value }: { label: string; value: string | number }) {
+function MetricRow({ label, value, icon }: { label: string; value: string | number; icon?: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-gray-700">{label}</span>
+    <div className="flex items-center justify-between py-2">
+      <div className="flex items-center gap-2 text-gray-700">
+        {icon}
+        <span>{label}</span>
+      </div>
       <span className="font-semibold text-gray-900">{value}</span>
+    </div>
+  )
+}
+
+function FunnelStep({
+  label,
+  count,
+  percent,
+  color,
+  icon,
+  isSuccess = false
+}: {
+  label: string;
+  count: number;
+  percent: number;
+  color: string;
+  icon: React.ReactNode;
+  isSuccess?: boolean
+}) {
+  return (
+    <div className="relative">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+          <div className={`p-1.5 rounded-md ${isSuccess ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+            {icon}
+          </div>
+          {label}
+        </div>
+        <div className="text-right">
+          <div className="text-sm font-bold text-gray-900">{count}</div>
+          <div className="text-[10px] text-gray-500">{percent.toFixed(0)}% von gesamt</div>
+        </div>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+        <div
+          className={`${color} h-3 rounded-full transition-all duration-1000`}
+          style={{ width: `${percent}%` }}
+        />
+      </div>
     </div>
   )
 }
@@ -306,7 +359,7 @@ function StatusBadge({ status }: { status: string }) {
     rejected: 'bg-red-100 text-red-700',
     expired: 'bg-orange-100 text-orange-700',
   }
-  
+
   return (
     <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles] || styles.draft}`}>
       {translateStatus(status)}

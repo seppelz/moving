@@ -6,7 +6,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, Download, Mail, Edit, Package, MapPin, Users,
   Clock, FileText, Calculator, CheckCircle,
-  AlertCircle, Loader
+  AlertCircle, Loader, Send, Check, X
 } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote } from '@/types'
@@ -54,6 +54,7 @@ export default function QuoteDetail() {
   const [quote, setQuote] = useState<Quote | null>(null)
   const [breakdown, setBreakdown] = useState<PricingBreakdown | null>(null)
   const [loading, setLoading] = useState(true)
+  const [updatingStatus, setUpdatingStatus] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -94,12 +95,15 @@ export default function QuoteDetail() {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!quoteId) return
+    setUpdatingStatus(true)
     try {
       await adminAPI.updateQuoteStatus(quoteId, newStatus)
       await loadQuoteDetails()
     } catch (error) {
       console.error('Failed to update status:', error)
       alert('Fehler beim Aktualisieren des Status')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -188,29 +192,72 @@ export default function QuoteDetail() {
               </p>
             </div>
 
-            {/* Status Selector */}
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">Status:</span>
-              <select
-                value={quote.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className={clsx(
-                  "px-4 py-2 rounded-lg font-medium border-2 cursor-pointer",
-                  {
-                    'bg-green-50 border-green-200 text-green-700': quote.status === 'accepted',
-                    'bg-blue-50 border-blue-200 text-blue-700': quote.status === 'sent',
-                    'bg-red-50 border-red-200 text-red-700': quote.status === 'rejected',
-                    'bg-gray-50 border-gray-200 text-gray-700': quote.status === 'draft',
-                    'bg-orange-50 border-orange-200 text-orange-700': quote.status === 'expired',
-                  }
+            {/* Status & Actions */}
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Status:</span>
+                <select
+                  value={quote.status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={updatingStatus}
+                  className={clsx(
+                    "px-4 py-2 rounded-lg font-medium border-2 cursor-pointer disabled:opacity-50",
+                    {
+                      'bg-green-50 border-green-200 text-green-700': quote.status === 'accepted',
+                      'bg-blue-50 border-blue-200 text-blue-700': quote.status === 'sent',
+                      'bg-red-50 border-red-200 text-red-700': quote.status === 'rejected',
+                      'bg-gray-50 border-gray-200 text-gray-700': quote.status === 'draft',
+                      'bg-orange-50 border-orange-200 text-orange-700': quote.status === 'expired',
+                    }
+                  )}
+                >
+                  <option value="draft">Entwurf</option>
+                  <option value="sent">Gesendet</option>
+                  <option value="accepted">Akzeptiert</option>
+                  <option value="rejected">Abgelehnt</option>
+                  <option value="expired">Abgelaufen</option>
+                </select>
+              </div>
+
+              {/* Contextual Action Buttons */}
+              <div className="flex items-center gap-2">
+                {quote.status === 'draft' && (
+                  <button
+                    onClick={() => handleStatusChange('sent')}
+                    disabled={updatingStatus}
+                    className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm"
+                  >
+                    {updatingStatus ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Angebot an Kunden senden
+                  </button>
                 )}
-              >
-                <option value="draft">Entwurf</option>
-                <option value="sent">Gesendet</option>
-                <option value="accepted">Akzeptiert</option>
-                <option value="rejected">Abgelehnt</option>
-                <option value="expired">Abgelaufen</option>
-              </select>
+                {quote.status === 'sent' && (
+                  <>
+                    <button
+                      onClick={() => handleStatusChange('accepted')}
+                      disabled={updatingStatus}
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg flex items-center gap-2 py-2 px-4 text-sm transition-colors"
+                    >
+                      <Check className="w-4 h-4" />
+                      Akzeptiert
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange('rejected')}
+                      disabled={updatingStatus}
+                      className="bg-red-50 text-red-600 hover:bg-red-100 font-medium rounded-lg flex items-center gap-2 py-2 px-4 text-sm transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                      Abgelehnt
+                    </button>
+                  </>
+                )}
+                {quote.status === 'accepted' && (
+                  <div className="flex items-center gap-2 text-green-600 font-medium text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+                    <CheckCircle className="w-4 h-4" />
+                    Umzug ist bestätigt
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
