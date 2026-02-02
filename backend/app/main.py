@@ -38,6 +38,31 @@ app = FastAPI(
 
 # Startup warnings for missing configuration
 @app.on_event("startup")
+async def startup_migrations():
+    """Run simple migrations for schema changes"""
+    from sqlalchemy import text
+    from app.core.database import engine
+    
+    logger.info("Checking for database schema updates...")
+    try:
+        with engine.begin() as conn:
+            # Attempt to add is_fixed_price column if it doesn't exist
+            # This is a simple way to handle schema evolution without full Alembic yet
+            try:
+                # SQL syntax for adding a column (works for both SQLite and Postgres)
+                conn.execute(text("ALTER TABLE quotes ADD COLUMN is_fixed_price BOOLEAN DEFAULT FALSE"))
+                logger.info("✓ Database updated: Added 'is_fixed_price' column to quotes table")
+            except Exception as e:
+                # Ignore if column already exists
+                error_msg = str(e).lower()
+                if "already exists" in error_msg or "duplicate column" in error_msg:
+                    logger.info("- Column 'is_fixed_price' already exists, skipping")
+                else:
+                    logger.warning(f"- Could not check/add 'is_fixed_price' column: {e}")
+    except Exception as e:
+        logger.error(f"✗ Schema update failed: {e}")
+
+@app.on_event("startup")
 async def startup_warnings():
     """Warn if critical environment variables are not set"""
     logger.info("Running startup checks...")
@@ -101,17 +126,16 @@ async def startup_warnings():
 # CORS middleware
 try:
     logger.info("Setting up CORS middleware...")
-    # If "*" is in origins, we must set allow_credentials to False
-    # or browser will throw an error "Ensure CORS response header values are valid"
     origins = settings.ALLOWED_ORIGINS
-    allow_all_origins = "*" in origins
     
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
-        allow_credentials=not allow_all_origins,
+        allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
+        # Add a regex to allow all subdomains of railway.app or localhost
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|.*\.railway\.app)(:\d+)?",
     )
     logger.info(f"✓ CORS configured for origins: {settings.ALLOWED_ORIGINS}")
 except Exception as e:

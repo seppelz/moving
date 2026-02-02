@@ -203,15 +203,18 @@ async def submit_quote(
         )
         
         # 2. Admin notification
-        email_service.send_admin_new_quote_notification(
-            quote_id=str(quote.id),
-            customer_name=quote.customer_name,
-            customer_email=quote.customer_email,
-            origin_city=quote_request.origin.city,
-            dest_city=quote_request.destination.city,
-            min_price=float(quote.min_price),
-            max_price=float(quote.max_price)
-        )
+        if settings.ADMIN_EMAIL:
+            email_service.send_admin_new_quote_notification(
+                quote_id=str(quote.id),
+                customer_name=quote.customer_name,
+                customer_email=quote.customer_email,
+                origin_city=request.origin.city,
+                dest_city=request.destination.city,
+                min_price=float(quote.min_price),
+                max_price=float(quote.max_price)
+            )
+        else:
+            logger.warning("ADMIN_EMAIL not set, skipping admin notification")
     except Exception as e:
         logger.error(f"Failed to send submission emails: {e}")
         # We don't fail the request if email fails

@@ -305,7 +305,7 @@ class EmailService:
     
     def _send_email(
         self,
-        to_email: str,
+        to_email: Optional[str],
         subject: str,
         html_body: str,
         attachment: Optional[bytes] = None,
@@ -314,6 +314,10 @@ class EmailService:
         """
         Internal method to send email
         """
+        if not to_email:
+            logger.warning(f"Skipping email send: No recipient address provided (Subject: {subject})")
+            return False
+
         # Create message
         msg = MIMEMultipart('alternative')
         msg['Subject'] = subject
