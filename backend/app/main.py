@@ -5,6 +5,7 @@ FastAPI application entry point
 import os
 import sys
 import logging
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -122,6 +123,33 @@ async def startup_warnings():
         # Don't raise - let app start anyway for debugging
     
     logger.info("Startup complete - application ready")
+    
+    # Start background cleanup task
+    asyncio.create_task(background_cleanup())
+
+async def background_cleanup():
+    """Simple background task that runs once a day"""
+    from app.core.database import SessionLocal
+    from app.services.quote_service import quote_service
+    
+    logger.info("Starting background cleanup loop (Auto-Expire Quotes)")
+    
+    while True:
+        try:
+            logger.info("Running scheduled cleanup: Checking for expired quotes...")
+            db = SessionLocal()
+            try:
+                count = quote_service.auto_expire_quotes(db)
+                if count > 0:
+                    logger.info(f"Cleanup: Expired {count} old quotes")
+            finally:
+                db.close()
+        except Exception as e:
+            logger.error(f"Error in background cleanup: {e}")
+        
+        # Wait for 24 hours before next run
+        # Using a shorter wait for the first run? No, let's keep it simple: 24h
+        await asyncio.sleep(24 * 3600)
 
 # CORS middleware
 try:
