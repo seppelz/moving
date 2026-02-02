@@ -8,6 +8,7 @@ import { Mail, Phone, User, ArrowLeft, CheckCircle, Loader } from 'lucide-react'
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'
 import type { Quote } from '@/types'
+import TruckVisualizer from './TruckVisualizer'
 
 export default function StepContact() {
   const {
@@ -102,12 +103,21 @@ export default function StepContact() {
           </p>
 
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6">
-            <div className="text-sm opacity-90 mb-2">Ihr Angebot</div>
-            <div className="text-4xl font-bold mb-2">
-              €{Math.round(submittedQuote.min_price)} - €{Math.round(submittedQuote.max_price)}
-            </div>
-            <div className="text-sm opacity-80">
-              Angebots-ID: {submittedQuote.id.slice(0, 8)}...
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              <div>
+                <div className="text-sm opacity-90 mb-2">Ihr Angebot</div>
+                <div className="text-4xl font-bold mb-2">
+                  €{Math.round(submittedQuote.min_price)} - €{Math.round(submittedQuote.max_price)}
+                </div>
+                <div className="text-sm opacity-80">
+                  Angebots-ID: {submittedQuote.id.slice(0, 8)}...
+                </div>
+              </div>
+              <TruckVisualizer
+                totalVolume={Number(submittedQuote.volume_m3)}
+                className="bg-white/10 backdrop-blur-md border border-white/20 !text-white"
+                showLabels={false}
+              />
             </div>
           </div>
 
@@ -165,14 +175,22 @@ export default function StepContact() {
 
         {/* Quote Summary */}
         {quote && (
-          <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6">
-            <div className="text-sm opacity-90 mb-2">Ihr Angebot</div>
-            <div className="text-4xl font-bold mb-2">
+          <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6 text-center">
+            <div className="text-sm opacity-90 mb-2">Voraussichtliches Angebot</div>
+            <div className="text-4xl font-bold mb-4">
               €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
             </div>
-            <div className="text-sm opacity-80">
-              {Number(quote.distance_km).toFixed(0)} km • {Number(quote.volume_m3).toFixed(1)} m³ •
-              ~{Number(quote.estimated_hours).toFixed(1)} Std.
+            <TruckVisualizer
+              totalVolume={Number(quote.volume_m3)}
+              className="bg-white/10 backdrop-blur-md border border-white/20 !text-white !p-4"
+              showLabels={false}
+            />
+            <div className="text-xs opacity-80 mt-4 flex items-center justify-center gap-4">
+              <span>{Number(quote.distance_km).toFixed(0)} km</span>
+              <span>•</span>
+              <span>{Number(quote.volume_m3).toFixed(1)} m³</span>
+              <span>•</span>
+              <span>~{Number(quote.estimated_hours).toFixed(1)} Std.</span>
             </div>
           </div>
         )}

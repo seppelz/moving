@@ -13,6 +13,7 @@ import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'
 import type { ItemTemplate } from '@/types'
 import clsx from 'clsx'
+import TruckVisualizer from './TruckVisualizer'
 
 export default function StepInventory() {
   const {
@@ -128,9 +129,6 @@ export default function StepInventory() {
     0
   )
 
-  // Truck capacity visualization (e.g. 3.5t truck ~ 20m3, 7.5t ~ 35m3)
-  const truckCapacity = totalVolume <= 18 ? 20 : (totalVolume <= 32 ? 35 : 50)
-  const truckProgress = Math.min((totalVolume / truckCapacity) * 100, 100)
 
   return (
     <motion.div
@@ -288,32 +286,7 @@ export default function StepInventory() {
             </h3>
 
             {/* Truck Visualizer */}
-            <div className="bg-gray-100 rounded-2xl p-6 mb-6">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-3xl font-black text-primary-600">
-                  {totalVolume.toFixed(1)} <span className="text-lg font-bold">m³</span>
-                </span>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  LKW Kapazität
-                </span>
-              </div>
-
-              <div className="h-3 bg-white rounded-full overflow-hidden border border-gray-200 mb-3">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${truckProgress}%` }}
-                  className={clsx("h-full transition-colors duration-500", {
-                    'bg-green-500': truckProgress < 80,
-                    'bg-orange-500': truckProgress >= 80 && truckProgress < 95,
-                    'bg-red-500': truckProgress >= 95,
-                  })}
-                />
-              </div>
-
-              <p className="text-xs text-gray-500 text-center">
-                {totalVolume <= 18 ? 'Empfehlung: 3.5t Transporter' : (totalVolume <= 32 ? 'Empfehlung: 7.5t LKW' : 'Empfehlung: 12t LKW')}
-              </p>
-            </div>
+            <TruckVisualizer totalVolume={totalVolume} className="mb-6" />
 
             {/* Selection List (Minified) */}
             <div className="space-y-3 mb-8 max-h-60 overflow-y-auto pr-2 custom-scrollbar">

@@ -11,6 +11,7 @@ import {
 import { adminAPI, quoteAPI } from '@/services/api'
 import type { Quote } from '@/types'
 import clsx from 'clsx'
+import TruckVisualizer from '@/components/calculator/TruckVisualizer'
 
 interface PricingBreakdown {
   quote_id: string
@@ -525,7 +526,14 @@ export default function QuoteDetail() {
                         </button>
                       </div>
                     ) : (
-                      `${Number(quote.volume_m3).toFixed(1)} m³`
+                      <div className="flex flex-col items-center gap-2">
+                        <span>{Number(quote.volume_m3).toFixed(1)} m³</span>
+                        <TruckVisualizer
+                          totalVolume={Number(quote.volume_m3)}
+                          className="!p-2 !bg-white border border-gray-100 shadow-sm min-w-[120px]"
+                          showLabels={false}
+                        />
+                      </div>
                     )}
                   />
                   <StatBox

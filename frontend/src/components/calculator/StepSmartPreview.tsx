@@ -11,6 +11,7 @@ import {
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'
 import clsx from 'clsx'
+import TruckVisualizer from './TruckVisualizer'
 
 interface SmartPrediction {
   predicted_volume_m3: number
@@ -186,27 +187,35 @@ export default function StepSmartPreview() {
 
         {/* Volume Estimate Card */}
         <div className="bg-gradient-to-br from-primary-600 to-purple-600 text-white p-8 rounded-2xl mb-8">
-          <div className="text-center">
-            <div className="text-sm font-medium opacity-90 mb-2">
-              Geschätztes Umzugsvolumen
-            </div>
-            <div className="text-6xl font-bold mb-3">
-              {displayVolume.toFixed(1)} m³
-            </div>
-            <div className="text-sm opacity-80 mb-1">
-              Typischer Bereich: {minVolume}-{maxVolume} m³
-            </div>
-            <div className="text-xs opacity-70 mb-4">
-              Circa {prediction.typical_boxes} Umzugskartons
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div className="text-center md:text-left">
+              <div className="text-sm font-medium opacity-90 mb-2">
+                Geschätztes Umzugsvolumen
+              </div>
+              <div className="text-6xl font-bold mb-3">
+                {displayVolume.toFixed(1)} m³
+              </div>
+              <div className="text-sm opacity-80 mb-1">
+                Typischer Bereich: {minVolume}-{maxVolume} m³
+              </div>
+              <div className="text-xs opacity-70 mb-4">
+                Circa {prediction.typical_boxes} Umzugskartons
+              </div>
+
+              {/* Confidence Score */}
+              <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {Math.round(prediction.confidence_score * 100)}% Übereinstimmung
+                </span>
+              </div>
             </div>
 
-            {/* Confidence Score */}
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {Math.round(prediction.confidence_score * 100)}% Übereinstimmung
-              </span>
-            </div>
+            <TruckVisualizer
+              totalVolume={displayVolume}
+              className="bg-white/10 backdrop-blur-md border border-white/20 !text-white"
+              showLabels={false}
+            />
           </div>
         </div>
 
