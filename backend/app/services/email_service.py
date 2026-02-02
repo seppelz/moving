@@ -44,7 +44,8 @@ class EmailService:
         customer_name: Optional[str],
         quote_id: str,
         min_price: float,
-        max_price: float
+        max_price: float,
+        is_fixed_price: bool = False
     ) -> bool:
         """
         Send instant confirmation email after quote submission
@@ -83,9 +84,15 @@ class EmailService:
                     <p>Wir haben Ihre Umzugsanfrage erhalten und freuen uns, Ihnen folgendes Angebot zu unterbreiten:</p>
                     
                     <div class="price-box">
-                        <div style="font-size: 18px; opacity: 0.9;">Geschätzter Preis</div>
-                        <div class="price">€{int(min_price):,} - €{int(max_price):,}</div>
-                        <div style="opacity: 0.8;">Alle Preise inkl. MwSt.</div>
+                        <div style="font-size: 18px; opacity: 0.9;">
+                            {"Verbindlicher Festpreis" if is_fixed_price else "Geschätzter Preis"}
+                        </div>
+                        <div class="price">
+                            {f"€{int(min_price):,}" if is_fixed_price else f"€{int(min_price):,} - €{int(max_price):,}"}
+                        </div>
+                        <div style="opacity: 0.8;">
+                            {"Garantiert ohne versteckte Kosten" if is_fixed_price else "Alle Preise inkl. MwSt."}
+                        </div>
                     </div>
                     
                     <h3>Nächste Schritte:</h3>
@@ -125,7 +132,8 @@ class EmailService:
         origin_city: str,
         dest_city: str,
         min_price: float,
-        max_price: float
+        max_price: float,
+        is_fixed_price: bool = False
     ) -> bool:
         """
         Notify admin about a new quote submission
@@ -156,7 +164,10 @@ class EmailService:
                     <div class="info-row"><span class="label">Name:</span> {customer_name or 'Nicht angegeben'}</div>
                     <div class="info-row"><span class="label">Email:</span> {customer_email}</div>
                     <div class="info-row"><span class="label">Route:</span> {origin_city} → {dest_city}</div>
-                    <div class="info-row"><span class="label">Schätzung:</span> €{int(min_price):,} - €{int(max_price):,}</div>
+                    <div class="info-row">
+                        <span class="label">Preis:</span> 
+                        {f"€{int(min_price):,} (FESTPREIS)" if is_fixed_price else f"€{int(min_price):,} - €{int(max_price):,}"}
+                    </div>
                     <div class="info-row"><span class="label">ID:</span> {quote_id}</div>
                     
                     <p>Bitte prüfen Sie die Anfrage im Admin-Dashboard und erstellen Sie das finale Angebot.</p>

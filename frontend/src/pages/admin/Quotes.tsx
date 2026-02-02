@@ -184,7 +184,14 @@ export default function AdminQuotes() {
                         <div className="text-gray-500 text-xs">{quote.inventory.length} Artikel</div>
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                        €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
+                        {quote.is_fixed_price ? (
+                          <div className="flex flex-col">
+                            <span>€{Math.round(Number(quote.min_price)).toLocaleString('de-DE')}</span>
+                            <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider leading-none mt-0.5">Festpreis</span>
+                          </div>
+                        ) : (
+                          `€${Math.round(Number(quote.min_price)).toLocaleString('de-DE')} - €${Math.round(Number(quote.max_price)).toLocaleString('de-DE')}`
+                        )}
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <StatusBadge status={quote.status} />

@@ -194,12 +194,20 @@ class PDFService:
         story.append(Paragraph("Preisübersicht", self.styles['SectionHeader']))
         min_price = quote_data.get('min_price', 0)
         max_price = quote_data.get('max_price', 0)
+        is_fixed = quote_data.get('is_fixed_price', False)
         
         # Price box
+        if is_fixed:
+            price_display = f"€{int(min_price):,}"
+            subtext = "Verbindlicher Festpreis - Garantiert ohne versteckte Kosten"
+        else:
+            price_display = f"€{int(min_price):,} - €{int(max_price):,}"
+            subtext = "Angebotspreis (Schätzung) inkl. MwSt."
+
         price_text = f"""
         <para align=center>
-        <font size=18 color="#0369a1"><b>€{int(min_price):,} - €{int(max_price):,}</b></font><br/>
-        <font size=10 color="#666666">Alle Preise inkl. MwSt.</font>
+        <font size=18 color="#0369a1"><b>{price_display}</b></font><br/>
+        <font size=10 color="#666666">{subtext}</font>
         </para>
         """
         story.append(Paragraph(price_text, self.styles['Normal']))

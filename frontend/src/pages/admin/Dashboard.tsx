@@ -240,7 +240,10 @@ export default function AdminDashboard() {
                       {quote.origin_address.postal_code} → {quote.destination_address.postal_code}
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                      €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
+                      {quote.is_fixed_price
+                        ? `€${Math.round(Number(quote.min_price)).toLocaleString('de-DE')}`
+                        : `€${Math.round(Number(quote.min_price)).toLocaleString('de-DE')} - €${Math.round(Number(quote.max_price)).toLocaleString('de-DE')}`
+                      }
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <StatusBadge status={quote.status} />

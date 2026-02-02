@@ -718,9 +718,14 @@ export default function QuoteDetail() {
                     <span className="text-lg font-bold text-gray-900">Gesamtpreis</span>
                     <div className="text-right">
                       <div className="text-2xl font-bold text-primary-600">
-                        €{totalMin.toLocaleString('de-DE')} - €{totalMax.toLocaleString('de-DE')}
+                        {quote.is_fixed_price
+                          ? `€${totalMin.toLocaleString('de-DE')}`
+                          : `€${totalMin.toLocaleString('de-DE')} - €${totalMax.toLocaleString('de-DE')}`
+                        }
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">inkl. MwSt.</div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {quote.is_fixed_price ? 'Garantiert inkl. MwSt.' : 'inkl. MwSt.'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -856,7 +861,10 @@ function BreakdownRow({
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm font-medium text-gray-700">{label}</span>
         <span className="text-sm font-bold text-gray-900">
-          €{minValue.toLocaleString('de-DE')} - €{maxValue.toLocaleString('de-DE')}
+          {minValue === maxValue
+            ? `€${minValue.toLocaleString('de-DE')}`
+            : `€${minValue.toLocaleString('de-DE')} - €${maxValue.toLocaleString('de-DE')}`
+          }
         </span>
       </div>
       <div className="text-xs text-gray-500">{tooltip}</div>

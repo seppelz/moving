@@ -158,7 +158,8 @@ async def update_quote_status(
                 customer_name=quote.customer_name,
                 quote_id=str(quote.id),
                 min_price=float(quote.min_price),
-                max_price=float(quote.max_price)
+                max_price=float(quote.max_price),
+                is_fixed_price=quote.is_fixed_price
             )
         except Exception as e:
             logger.error(f"Failed to trigger email confirmation on status change: {e}")
@@ -399,6 +400,7 @@ async def generate_quote_pdf(
         'estimated_hours': float(quote.estimated_hours),
         'min_price': float(quote.min_price),
         'max_price': float(quote.max_price),
+        'is_fixed_price': quote.is_fixed_price,
         'inventory': quote.inventory,
         'services': quote.services,
         'created_at': quote.created_at,
