@@ -90,9 +90,9 @@ class EmailService:
                     
                     <h3>Nächste Schritte:</h3>
                     <ul>
-                        <li>Unser Team prüft Ihre Anfrage im Detail</li>
-                        <li>Sie erhalten innerhalb von 24 Stunden ein verbindliches Angebot</li>
-                        <li>Bei Fragen können Sie uns jederzeit kontaktieren</li>
+                        <li>Unser Team prüft Ihre Anfrage individuell</li>
+                        <li>Wir kontaktieren Sie bei Rückfragen kurzfristig</li>
+                        <li>Sie erhalten innerhalb von 2 Stunden (während unserer Geschäftszeiten) Ihr verbindliches Angebot</li>
                     </ul>
                     
                     <p><strong>Ihre Angebots-ID:</strong> {quote_id[:16]}...</p>
@@ -116,6 +116,59 @@ class EmailService:
         """
         
         return self._send_email(to_email, subject, html_body)
+    
+    def send_admin_new_quote_notification(
+        self,
+        quote_id: str,
+        customer_name: Optional[str],
+        customer_email: str,
+        origin_city: str,
+        dest_city: str,
+        min_price: float,
+        max_price: float
+    ) -> bool:
+        """
+        Notify admin about a new quote submission
+        """
+        subject = f"NEUE ANFRAGE: {customer_name or customer_email} ({origin_city} -> {dest_city})"
+        
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; }}
+                .header {{ background-color: #111827; color: white; padding: 20px; }}
+                .content {{ padding: 20px; }}
+                .info-row {{ margin-bottom: 10px; border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; }}
+                .label {{ font-weight: bold; color: #4b5563; min-width: 120px; display: inline-block; }}
+                .btn {{ background-color: #0369a1; color: white; padding: 10px 20px; 
+                       text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h2>Neue Umzugsanfrage eingegangen</h2>
+                </div>
+                <div class="content">
+                    <div class="info-row"><span class="label">Name:</span> {customer_name or 'Nicht angegeben'}</div>
+                    <div class="info-row"><span class="label">Email:</span> {customer_email}</div>
+                    <div class="info-row"><span class="label">Route:</span> {origin_city} → {dest_city}</div>
+                    <div class="info-row"><span class="label">Schätzung:</span> €{int(min_price):,} - €{int(max_price):,}</div>
+                    <div class="info-row"><span class="label">ID:</span> {quote_id}</div>
+                    
+                    <p>Bitte prüfen Sie die Anfrage im Admin-Dashboard und erstellen Sie das finale Angebot.</p>
+                    
+                    <a href="https://movemaster.de/admin/quotes/{quote_id}" class="btn">Im Dashboard bearbeiten</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return self._send_email(settings.ADMIN_EMAIL, subject, html_body)
     
     def send_pdf_quote(
         self,

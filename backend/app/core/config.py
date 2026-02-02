@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     # API Settings
     API_V1_PREFIX: str = "/api/v1"
     PROJECT_NAME: str = "MoveMaster"
+    ADMIN_EMAIL: str = Field(default="admin@movemaster.de", env="ADMIN_EMAIL")
     
     # CORS
     ALLOWED_ORIGINS: List[str] = [

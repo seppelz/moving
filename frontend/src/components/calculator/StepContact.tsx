@@ -28,23 +28,23 @@ export default function StepContact() {
     setCustomerName,
     setStep,
   } = useCalculatorStore()
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submittedQuote, setSubmittedQuote] = useState<Quote | null>(null)
   const [error, setError] = useState<string | null>(null)
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!customerEmail) {
       setError('Bitte geben Sie eine E-Mail-Adresse an')
       return
     }
-    
+
     setIsSubmitting(true)
     setError(null)
-    
+
     try {
       const submittedQuoteData = await quoteAPI.submitQuote({
         customer_email: customerEmail,
@@ -67,7 +67,7 @@ export default function StepContact() {
         inventory,
         services,
       })
-      
+
       setSubmittedQuote(submittedQuoteData)
       setSubmitted(true)
     } catch (err: any) {
@@ -76,7 +76,7 @@ export default function StepContact() {
       setIsSubmitting(false)
     }
   }
-  
+
   if (submitted && submittedQuote) {
     return (
       <motion.div
@@ -93,14 +93,14 @@ export default function StepContact() {
           >
             <CheckCircle className="w-12 h-12 text-green-600" />
           </motion.div>
-          
+
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Vielen Dank!
           </h2>
           <p className="text-gray-600 mb-8">
-            Ihr Angebot wurde erfolgreich erstellt und an {customerEmail} gesendet.
+            Anfrage erfolgreich übermittelt. Wir prüfen Ihre Angaben und senden Ihnen in Kürze Ihr verbindliches Angebot an {customerEmail}.
           </p>
-          
+
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6">
             <div className="text-sm opacity-90 mb-2">Ihr Angebot</div>
             <div className="text-4xl font-bold mb-2">
@@ -110,7 +110,7 @@ export default function StepContact() {
               Angebots-ID: {submittedQuote.id.slice(0, 8)}...
             </div>
           </div>
-          
+
           <div className="text-left bg-gray-50 rounded-lg p-6 mb-6">
             <h3 className="font-semibold text-gray-900 mb-4">Nächste Schritte:</h3>
             <ol className="space-y-3 text-gray-700">
@@ -118,23 +118,23 @@ export default function StepContact() {
                 <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   1
                 </span>
-                <span>Sie erhalten in wenigen Minuten eine Bestätigungs-E-Mail</span>
+                <span>Sie erhalten sofort eine Bestätigung Ihrer Anfrage per E-Mail</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   2
                 </span>
-                <span>Unser Team prüft Ihre Anfrage und erstellt ein detailliertes Angebot</span>
+                <span>Unser Team prüft die Details (Volumen, Etagen, Distanz) individuell</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
                   3
                 </span>
-                <span>Wir kontaktieren Sie innerhalb von 24 Stunden</span>
+                <span>Sie erhalten innerhalb von 2 Stunden (während unserer Geschäftszeiten) Ihr finales Angebot</span>
               </li>
             </ol>
           </div>
-          
+
           <button
             onClick={() => window.location.reload()}
             className="btn-secondary"
@@ -145,7 +145,7 @@ export default function StepContact() {
       </motion.div>
     )
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
@@ -162,7 +162,7 @@ export default function StepContact() {
             Wohin sollen wir Ihr personalisiertes Angebot senden?
           </p>
         </div>
-        
+
         {/* Quote Summary */}
         {quote && (
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6">
@@ -176,7 +176,7 @@ export default function StepContact() {
             </div>
           </div>
         )}
-        
+
         {/* Contact Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -193,7 +193,7 @@ export default function StepContact() {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Phone className="w-4 h-4 inline mr-2" />
@@ -207,7 +207,7 @@ export default function StepContact() {
               className="input-field"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <User className="w-4 h-4 inline mr-2" />
@@ -221,7 +221,7 @@ export default function StepContact() {
               className="input-field"
             />
           </div>
-          
+
           {/* Checkboxes */}
           <div className="space-y-3 pt-2">
             <label className="flex items-start gap-3">
@@ -233,7 +233,7 @@ export default function StepContact() {
                 Ja, ich möchte zurückgerufen werden
               </span>
             </label>
-            
+
             <label className="flex items-start gap-3">
               <input
                 type="checkbox"
@@ -244,7 +244,7 @@ export default function StepContact() {
               </span>
             </label>
           </div>
-          
+
           {/* Privacy Notice */}
           <p className="text-xs text-gray-500">
             Mit dem Absenden akzeptieren Sie unsere{' '}
@@ -253,7 +253,7 @@ export default function StepContact() {
             </a>
             . Ihre Daten werden vertraulich behandelt und nicht an Dritte weitergegeben.
           </p>
-          
+
           {/* Error Message */}
           {error && (
             <motion.div
@@ -264,7 +264,7 @@ export default function StepContact() {
               {error}
             </motion.div>
           )}
-          
+
           {/* Navigation */}
           <div className="flex gap-4 pt-4">
             <button

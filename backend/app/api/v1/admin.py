@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 from app.core.database import get_db
 from app.models.quote import Quote, QuoteStatus
 from app.models.company import Company
-from app.schemas.quote import QuoteResponse
+from app.schemas.quote import QuoteResponse, QuoteUpdateRequest
 from app.services.pdf_service import pdf_service
 from app.services.email_service import email_service
 
@@ -164,6 +164,36 @@ async def update_quote_status(
             logger.error(f"Failed to trigger email confirmation on status change: {e}")
     
     return {"success": True, "quote_id": quote_id, "new_status": new_status}
+
+
+@router.patch("/quotes/{quote_id}/details")
+async def update_quote_details(
+    quote_id: str,
+    update_data: QuoteUpdateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Allow admin to manually override quote prices, volume and fixed_price status
+    """
+    quote = db.query(Quote).filter(Quote.id == quote_id).first()
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+    
+    if update_data.min_price is not None:
+        quote.min_price = update_data.min_price
+    if update_data.max_price is not None:
+        quote.max_price = update_data.max_price
+    if update_data.volume_m3 is not None:
+        quote.volume_m3 = update_data.volume_m3
+    if update_data.is_fixed_price is not None:
+        quote.is_fixed_price = update_data.is_fixed_price
+        
+    quote.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(quote)
+    
+    return {"success": True, "quote_id": quote_id}
 
 
 @router.get("/analytics")

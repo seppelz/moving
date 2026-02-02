@@ -3,7 +3,7 @@ Quote model for storing customer requests
 """
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, JSON, Numeric, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, String, JSON, Numeric, DateTime, ForeignKey, Enum, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -46,6 +46,7 @@ class Quote(Base):
     
     # Status and tracking
     status = Column(Enum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True)
+    is_fixed_price = Column(Boolean, default=False, nullable=False)
     pdf_url = Column(String, nullable=True)
     
     # Timestamps

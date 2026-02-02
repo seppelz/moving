@@ -7,6 +7,7 @@ import type {
   QuoteCalculateResponse,
   QuoteSubmitRequest,
   Quote,
+  QuoteUpdateData,
   ItemTemplate,
   RoomTemplate
 } from '@/types'
@@ -154,6 +155,14 @@ export const adminAPI = {
   },
 
   /**
+   * Update specific quote details (prices, volume, fixed_price)
+   */
+  updateQuoteDetails: async (quoteId: string, data: QuoteUpdateData) => {
+    const response = await api.patch(`/api/v1/admin/quotes/${quoteId}/details`, data)
+    return response.data
+  },
+
+  /**
    * Get analytics
    */
   getAnalytics: async (days: number = 30) => {
@@ -190,7 +199,7 @@ export const adminAPI = {
     const response = await api.post(`/api/v1/admin/quotes/${quoteId}/pdf`, null, {
       responseType: 'blob',
     })
-    
+
     // Create download link
     const blob = new Blob([response.data], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)

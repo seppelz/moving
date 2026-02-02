@@ -99,8 +99,16 @@ export interface Quote {
   max_price: number
   volume_m3: number
   status: QuoteStatus
+  is_fixed_price: boolean
   pdf_url?: string
   created_at: string
+}
+
+export interface QuoteUpdateData {
+  min_price?: number
+  max_price?: number
+  volume_m3?: number
+  is_fixed_price?: boolean
 }
 
 export interface ItemTemplate {

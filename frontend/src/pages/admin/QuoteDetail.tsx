@@ -6,7 +6,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   ChevronLeft, Download, Mail, Edit, Package, MapPin, Users,
   Clock, FileText, Calculator, CheckCircle,
-  AlertCircle, Loader, Send, Check, X
+  AlertCircle, Loader, Send, Check, X, Edit2, Save, XCircle
 } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import type { Quote } from '@/types'
@@ -55,7 +55,16 @@ export default function QuoteDetail() {
   const [breakdown, setBreakdown] = useState<PricingBreakdown | null>(null)
   const [loading, setLoading] = useState(true)
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Edit states
+  const [editData, setEditData] = useState({
+    min_price: 0,
+    max_price: 0,
+    volume_m3: 0,
+    is_fixed_price: false
+  })
 
   useEffect(() => {
     if (quoteId) {
@@ -74,12 +83,33 @@ export default function QuoteDetail() {
       ])
       setQuote(quoteData)
       setBreakdown(breakdownData)
+      setEditData({
+        min_price: Number(quoteData.min_price),
+        max_price: Number(quoteData.max_price),
+        volume_m3: Number(quoteData.volume_m3),
+        is_fixed_price: quoteData.is_fixed_price || false
+      })
       setError(null)
     } catch (err: any) {
       console.error('Failed to load quote details:', err)
       setError(err.response?.data?.detail || 'Failed to load quote')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleUpdateDetails = async () => {
+    if (!quoteId) return
+    setUpdatingStatus(true)
+    try {
+      await adminAPI.updateQuoteDetails(quoteId, editData)
+      await loadQuoteDetails()
+      setEditMode(false)
+    } catch (err) {
+      console.error('Failed to update details:', err)
+      alert('Fehler beim Speichern der Änderungen')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -194,12 +224,50 @@ export default function QuoteDetail() {
 
             {/* Status & Actions */}
             <div className="flex flex-col items-end gap-3">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Status:</span>
+              <div className="flex items-center gap-2">
+                {editMode ? (
+                  <>
+                    <button
+                      onClick={handleUpdateDetails}
+                      disabled={updatingStatus}
+                      className="btn-primary flex items-center gap-2 !py-2 !px-4 text-sm"
+                    >
+                      {updatingStatus ? <Loader className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      Speichern
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditMode(false)
+                        setEditData({
+                          min_price: Number(quote.min_price),
+                          max_price: Number(quote.max_price),
+                          volume_m3: Number(quote.volume_m3),
+                          is_fixed_price: quote.is_fixed_price || false
+                        })
+                      }}
+                      disabled={updatingStatus}
+                      className="btn-secondary flex items-center gap-2 !py-2 !px-4 text-sm"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Abbrechen
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setEditMode(true)}
+                    className="text-primary-600 hover:bg-primary-50 font-medium rounded-lg flex items-center gap-2 py-2 px-4 text-sm transition-colors border border-primary-200"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Angebot bearbeiten
+                  </button>
+                )}
+
+                <div className="h-8 w-px bg-gray-200 mx-1"></div>
+
                 <select
                   value={quote.status}
                   onChange={(e) => handleStatusChange(e.target.value)}
-                  disabled={updatingStatus}
+                  disabled={updatingStatus || editMode}
                   className={clsx(
                     "px-4 py-2 rounded-lg font-medium border-2 cursor-pointer disabled:opacity-50",
                     {
@@ -221,7 +289,7 @@ export default function QuoteDetail() {
 
               {/* Contextual Action Buttons */}
               <div className="flex items-center gap-2">
-                {quote.status === 'draft' && (
+                {!editMode && quote.status === 'draft' && (
                   <button
                     onClick={() => handleStatusChange('sent')}
                     disabled={updatingStatus}
@@ -231,7 +299,8 @@ export default function QuoteDetail() {
                     Angebot an Kunden senden
                   </button>
                 )}
-                {quote.status === 'sent' && (
+                {/* ... existing buttons ... */}
+                {!editMode && quote.status === 'sent' && (
                   <>
                     <button
                       onClick={() => handleStatusChange('accepted')}
@@ -251,7 +320,7 @@ export default function QuoteDetail() {
                     </button>
                   </>
                 )}
-                {quote.status === 'accepted' && (
+                {!editMode && quote.status === 'accepted' && (
                   <div className="flex items-center gap-2 text-green-600 font-medium text-sm bg-green-50 px-4 py-2 rounded-lg border border-green-100">
                     <CheckCircle className="w-4 h-4" />
                     Umzug ist bestätigt
@@ -268,16 +337,64 @@ export default function QuoteDetail() {
           {/* Left Column - Main Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Price Summary Card */}
-            <div className="card bg-gradient-to-br from-primary-600 to-purple-600 text-white">
-              <div className="text-center">
-                <div className="text-sm font-medium opacity-90 mb-2">Angebotspreis</div>
-                <div className="text-5xl font-bold mb-2">
-                  €{totalMin.toLocaleString('de-DE')} - €{totalMax.toLocaleString('de-DE')}
+            <div className={clsx(
+              "card text-white relative overflow-hidden",
+              editData.is_fixed_price
+                ? "bg-gradient-to-br from-green-600 to-emerald-700"
+                : "bg-gradient-to-br from-primary-600 to-purple-600"
+            )}>
+              {editMode ? (
+                <div className="space-y-4">
+                  <div className="text-center font-medium opacity-90 mb-2">Preise bearbeiten</div>
+                  <div className="flex items-center justify-center gap-4">
+                    <div className="flex-1">
+                      <label className="block text-xs opacity-80 mb-1">Min (€)</label>
+                      <input
+                        type="number"
+                        value={editData.min_price}
+                        onChange={(e) => setEditData({ ...editData, min_price: Number(e.target.value) })}
+                        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs opacity-80 mb-1">Max (€)</label>
+                      <input
+                        type="number"
+                        value={editData.max_price}
+                        onChange={(e) => setEditData({ ...editData, max_price: Number(e.target.value) })}
+                        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
+                      />
+                    </div>
+                  </div>
+                  <label className="flex items-center justify-center gap-2 cursor-pointer bg-white/10 py-2 rounded-lg hover:bg-white/20 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={editData.is_fixed_price}
+                      onChange={(e) => setEditData({ ...editData, is_fixed_price: e.target.checked })}
+                      className="w-4 h-4 rounded text-green-600"
+                    />
+                    <span className="text-sm font-semibold">Festpreis-Angebot</span>
+                  </label>
                 </div>
-                <div className="text-sm opacity-80">
-                  Durchschnitt: €{avgPrice.toLocaleString('de-DE')} inkl. MwSt.
+              ) : (
+                <div className="text-center">
+                  <div className="text-sm font-medium opacity-90 mb-2">
+                    {quote.is_fixed_price ? 'Verbindlicher Festpreis' : 'Angebotspreis (Schätzung)'}
+                  </div>
+                  <div className="text-5xl font-bold mb-2">
+                    {quote.is_fixed_price
+                      ? `€${totalMin.toLocaleString('de-DE')}`
+                      : `€${totalMin.toLocaleString('de-DE')} - €${totalMax.toLocaleString('de-DE')}`
+                    }
+                  </div>
+                  <div className="text-sm opacity-80">
+                    {quote.is_fixed_price
+                      ? 'Garantiert ohne versteckte Kosten'
+                      : `Durchschnitt: €${avgPrice.toLocaleString('de-DE')} inkl. MwSt.`
+                    }
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Customer Information */}
@@ -335,7 +452,16 @@ export default function QuoteDetail() {
                   <StatBox
                     icon={<Package className="w-5 h-5" />}
                     label="Volumen"
-                    value={`${Number(quote.volume_m3).toFixed(1)} m³`}
+                    value={editMode ? (
+                      <input
+                        type="number"
+                        value={editData.volume_m3}
+                        onChange={(e) => setEditData({ ...editData, volume_m3: Number(e.target.value) })}
+                        className="w-16 bg-white border border-gray-200 rounded px-1 py-0.5 text-center text-xs"
+                      />
+                    ) : (
+                      `${Number(quote.volume_m3).toFixed(1)} m³`
+                    )}
                   />
                   <StatBox
                     icon={<Clock className="w-5 h-5" />}
@@ -628,7 +754,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   )
 }
 
-function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function StatBox({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div className="bg-gray-50 rounded-lg p-3 text-center">
       <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2 text-primary-600">

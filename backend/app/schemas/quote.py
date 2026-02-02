@@ -102,11 +102,20 @@ class QuoteResponse(BaseModel):
     max_price: Decimal
     volume_m3: Decimal
     status: QuoteStatus
+    is_fixed_price: bool = False
     pdf_url: Optional[str]
     created_at: datetime
     
     class Config:
         from_attributes = True
+
+
+class QuoteUpdateRequest(BaseModel):
+    """Request for updating specific quote details"""
+    min_price: Optional[Decimal] = None
+    max_price: Optional[Decimal] = None
+    volume_m3: Optional[Decimal] = None
+    is_fixed_price: Optional[bool] = None
 
 
 class ItemTemplateResponse(BaseModel):
