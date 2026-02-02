@@ -64,6 +64,7 @@ async def list_quotes(
             max_price=q.max_price,
             volume_m3=q.volume_m3,
             status=q.status,
+            is_fixed_price=q.is_fixed_price,
             pdf_url=q.pdf_url,
             created_at=q.created_at
         )
@@ -112,6 +113,7 @@ async def get_quote(
         max_price=quote.max_price,
         volume_m3=quote.volume_m3,
         status=quote.status,
+        is_fixed_price=quote.is_fixed_price,
         pdf_url=quote.pdf_url,
         created_at=quote.created_at
     )

@@ -236,6 +236,7 @@ async def submit_quote(
         max_price=quote.max_price,
         volume_m3=quote.volume_m3,
         status=quote.status,
+        is_fixed_price=quote.is_fixed_price,
         pdf_url=quote.pdf_url,
         created_at=quote.created_at
     )
