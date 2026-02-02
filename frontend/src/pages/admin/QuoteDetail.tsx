@@ -8,7 +8,7 @@ import {
   Clock, FileText, Calculator, CheckCircle,
   AlertCircle, Loader, Send, Check, X, Edit2, Save, XCircle
 } from 'lucide-react'
-import { adminAPI } from '@/services/api'
+import { adminAPI, quoteAPI } from '@/services/api'
 import type { Quote } from '@/types'
 import clsx from 'clsx'
 
@@ -102,12 +102,51 @@ export default function QuoteDetail() {
     if (!quoteId) return
     setUpdatingStatus(true)
     try {
-      await adminAPI.updateQuoteDetails(quoteId, editData)
+      // If it's a fixed price, ensure max_price matches min_price before sending
+      const finalData = { ...editData }
+      if (finalData.is_fixed_price) {
+        finalData.max_price = finalData.min_price
+      }
+
+      await adminAPI.updateQuoteDetails(quoteId, finalData)
       await loadQuoteDetails()
       setEditMode(false)
     } catch (err) {
       console.error('Failed to update details:', err)
       alert('Fehler beim Speichern der Änderungen')
+    } finally {
+      setUpdatingStatus(false)
+    }
+  }
+
+  const handleRecalculate = async () => {
+    if (!quote) return
+    setUpdatingStatus(true)
+    try {
+      // Use existing calculate API with new volume
+      const result = await quoteAPI.calculateQuote({
+        origin_postal_code: quote.origin_address.postal_code,
+        destination_postal_code: quote.destination_address.postal_code,
+        volume_m3: editData.volume_m3,
+        origin_floor: quote.origin_address.floor,
+        destination_floor: quote.destination_address.floor,
+        origin_has_elevator: quote.origin_address.has_elevator,
+        destination_has_elevator: quote.destination_address.has_elevator,
+        services: quote.services.map(s => ({
+          service_type: s.service_type,
+          enabled: s.enabled,
+          metadata: s.metadata
+        }))
+      })
+
+      setEditData({
+        ...editData,
+        min_price: Number(result.min_price),
+        max_price: Number(result.max_price)
+      })
+    } catch (err) {
+      console.error('Recalculation failed:', err)
+      alert('Neu-Berechnung fehlgeschlagen. Bitte prüfen Sie die Eingaben.')
     } finally {
       setUpdatingStatus(false)
     }
@@ -345,27 +384,42 @@ export default function QuoteDetail() {
             )}>
               {editMode ? (
                 <div className="space-y-4">
-                  <div className="text-center font-medium opacity-90 mb-2">Preise bearbeiten</div>
-                  <div className="flex items-center justify-center gap-4">
-                    <div className="flex-1">
-                      <label className="block text-xs opacity-80 mb-1">Min (€)</label>
+                  <div className="text-center font-medium opacity-90 mb-2">Preise & Konditionen</div>
+
+                  {editData.is_fixed_price ? (
+                    <div>
+                      <label className="block text-xs opacity-80 mb-1 text-center">Verbindlicher Festpreis (€)</label>
                       <input
                         type="number"
                         value={editData.min_price}
-                        onChange={(e) => setEditData({ ...editData, min_price: Number(e.target.value) })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
+                        onChange={(e) => setEditData({ ...editData, min_price: Number(e.target.value), max_price: Number(e.target.value) })}
+                        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold text-center text-xl"
+                        placeholder="0.00"
                       />
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-xs opacity-80 mb-1">Max (€)</label>
-                      <input
-                        type="number"
-                        value={editData.max_price}
-                        onChange={(e) => setEditData({ ...editData, max_price: Number(e.target.value) })}
-                        className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
-                      />
+                  ) : (
+                    <div className="flex items-center justify-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-xs opacity-80 mb-1">Min (€)</label>
+                        <input
+                          type="number"
+                          value={editData.min_price}
+                          onChange={(e) => setEditData({ ...editData, min_price: Number(e.target.value) })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-xs opacity-80 mb-1">Max (€)</label>
+                        <input
+                          type="number"
+                          value={editData.max_price}
+                          onChange={(e) => setEditData({ ...editData, max_price: Number(e.target.value) })}
+                          className="w-full bg-white/10 border border-white/20 rounded px-3 py-2 text-white font-bold"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
+
                   <label className="flex items-center justify-center gap-2 cursor-pointer bg-white/10 py-2 rounded-lg hover:bg-white/20 transition-colors">
                     <input
                       type="checkbox"
@@ -453,12 +507,23 @@ export default function QuoteDetail() {
                     icon={<Package className="w-5 h-5" />}
                     label="Volumen"
                     value={editMode ? (
-                      <input
-                        type="number"
-                        value={editData.volume_m3}
-                        onChange={(e) => setEditData({ ...editData, volume_m3: Number(e.target.value) })}
-                        className="w-16 bg-white border border-gray-200 rounded px-1 py-0.5 text-center text-xs"
-                      />
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="number"
+                          value={editData.volume_m3}
+                          onChange={(e) => setEditData({ ...editData, volume_m3: Number(e.target.value) })}
+                          className="w-20 bg-white border border-gray-200 rounded px-2 py-1 text-center text-sm font-semibold"
+                        />
+                        <button
+                          onClick={handleRecalculate}
+                          disabled={updatingStatus}
+                          className="text-[10px] text-primary-600 hover:underline flex items-center justify-center gap-1"
+                          title="Preis basierend auf neuem Volumen berechnen"
+                        >
+                          {updatingStatus ? <Loader className="w-2 h-2 animate-spin" /> : <Calculator className="w-2 h-2" />}
+                          Berechnen
+                        </button>
+                      </div>
                     ) : (
                       `${Number(quote.volume_m3).toFixed(1)} m³`
                     )}

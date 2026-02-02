@@ -175,25 +175,48 @@ async def update_quote_details(
     """
     Allow admin to manually override quote prices, volume and fixed_price status
     """
-    quote = db.query(Quote).filter(Quote.id == quote_id).first()
+    import uuid
+    
+    # Convert string to UUID
+    try:
+        quote_uuid = uuid.UUID(quote_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid quote ID format")
+        
+    quote = db.query(Quote).filter(Quote.id == quote_uuid).first()
     if not quote:
         raise HTTPException(status_code=404, detail="Quote not found")
     
+    # Handle manual price overrides
     if update_data.min_price is not None:
         quote.min_price = update_data.min_price
     if update_data.max_price is not None:
         quote.max_price = update_data.max_price
+        
+    # Handle volume changes
     if update_data.volume_m3 is not None:
         quote.volume_m3 = update_data.volume_m3
+        
+    # Handle fixed price status
     if update_data.is_fixed_price is not None:
         quote.is_fixed_price = update_data.is_fixed_price
+        # If transitioning to fixed price, ensure min/max are synced if only one was provided
+        if quote.is_fixed_price and quote.min_price != quote.max_price:
+            # Prefer min_price as the fixed price base
+            quote.max_price = quote.min_price
         
     quote.updated_at = datetime.utcnow()
     
-    db.commit()
-    db.refresh(quote)
+    try:
+        db.commit()
+        db.refresh(quote)
+        logger.info(f"Successfully updated quote {quote_id} details")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to update quote {quote_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save changes to database")
     
-    return {"success": True, "quote_id": quote_id}
+    return {"success": True, "quote_id": str(quote.id)}
 
 
 @router.get("/analytics")
