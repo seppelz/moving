@@ -767,11 +767,15 @@ export default function QuoteDetail() {
                 <ComplexityIndicator
                   label="Treppensituation"
                   value={
-                    !breakdown.quote_details.origin_has_elevator || !breakdown.quote_details.destination_has_elevator
+                    (breakdown.quote_details.origin_floor > 0 && !breakdown.quote_details.origin_has_elevator) ||
+                      (breakdown.quote_details.destination_floor > 0 && !breakdown.quote_details.destination_has_elevator)
                       ? 'Erhöhte Komplexität'
                       : 'Standard'
                   }
-                  isComplex={!breakdown.quote_details.origin_has_elevator || !breakdown.quote_details.destination_has_elevator}
+                  isComplex={
+                    (breakdown.quote_details.origin_floor > 0 && !breakdown.quote_details.origin_has_elevator) ||
+                    (breakdown.quote_details.destination_floor > 0 && !breakdown.quote_details.destination_has_elevator)
+                  }
                 />
                 <ComplexityIndicator
                   label="Volumengröße"
