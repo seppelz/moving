@@ -101,11 +101,16 @@ async def startup_warnings():
 # CORS middleware
 try:
     logger.info("Setting up CORS middleware...")
+    # If "*" is in origins, we must set allow_credentials to False
+    # or browser will throw an error "Ensure CORS response header values are valid"
+    origins = settings.ALLOWED_ORIGINS
+    allow_all_origins = "*" in origins
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.ALLOWED_ORIGINS,
-        allow_credentials=True,
-        allow_methods=["*"],
+        allow_origins=origins,
+        allow_credentials=not allow_all_origins,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
     )
     logger.info(f"✓ CORS configured for origins: {settings.ALLOWED_ORIGINS}")
