@@ -269,7 +269,7 @@ export default function StepContact() {
           <div className="flex gap-4 pt-4">
             <button
               type="button"
-              onClick={() => setStep(4)}
+              onClick={() => setStep(5)}
               disabled={isSubmitting}
               className="btn-secondary flex items-center gap-2"
             >

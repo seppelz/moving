@@ -18,15 +18,15 @@ export default function StepInventory() {
     setStep,
     calculateQuote,
   } = useCalculatorStore()
-  
+
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('living_room')
-  
+
   useEffect(() => {
     loadItemTemplates()
   }, [])
-  
+
   const loadItemTemplates = async () => {
     try {
       const templates = await quoteAPI.getItemTemplates()
@@ -37,19 +37,19 @@ export default function StepInventory() {
       setLoading(false)
     }
   }
-  
+
   const categories = [
     { id: 'living_room', label: 'Wohnzimmer', icon: Sofa },
     { id: 'bedroom', label: 'Schlafzimmer', icon: Bed },
     { id: 'kitchen', label: 'Küche', icon: UtensilsCrossed },
     { id: 'other', label: 'Sonstiges', icon: Package },
   ]
-  
+
   const getItemQuantity = (itemId: string) => {
     const item = inventory.find((i) => i.item_id === itemId)
     return item?.quantity || 0
   }
-  
+
   const handleAddItem = (template: ItemTemplate) => {
     addInventoryItem({
       item_id: template.id,
@@ -59,26 +59,26 @@ export default function StepInventory() {
       category: template.category,
     })
   }
-  
+
   const handleUpdateQuantity = (itemId: string, change: number) => {
     const currentQty = getItemQuantity(itemId)
     updateInventoryItemQuantity(itemId, Math.max(0, currentQty + change))
   }
-  
+
   const handleNext = async () => {
     await calculateQuote()
     setStep(3)
   }
-  
+
   const totalVolume = inventory.reduce(
     (sum, item) => sum + item.volume_m3 * item.quantity,
     0
   )
-  
+
   const categoryTemplates = itemTemplates.filter(
     (t) => t.category === selectedCategory
   )
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
@@ -97,7 +97,7 @@ export default function StepInventory() {
             ausgefüllt.
           </p>
         </div>
-        
+
         {/* Category Tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {categories.map((category) => (
@@ -119,7 +119,7 @@ export default function StepInventory() {
             </button>
           ))}
         </div>
-        
+
         {/* Item Grid */}
         {loading ? (
           <div className="text-center py-12">
@@ -154,7 +154,7 @@ export default function StepInventory() {
                         </p>
                       </div>
                     </div>
-                    
+
                     {quantity === 0 ? (
                       <button
                         onClick={() => handleAddItem(template)}
@@ -188,7 +188,7 @@ export default function StepInventory() {
             </AnimatePresence>
           </div>
         )}
-        
+
         {/* Summary */}
         <div className="bg-gray-50 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
@@ -200,11 +200,11 @@ export default function StepInventory() {
             </div>
           </div>
         </div>
-        
+
         {/* Navigation */}
         <div className="flex gap-4">
           <button
-            onClick={() => setStep(1)}
+            onClick={() => setStep(3)}
             className="btn-secondary flex items-center gap-2"
           >
             <ArrowLeft className="w-5 h-5" />

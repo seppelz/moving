@@ -23,35 +23,35 @@ export default function StepServices() {
     setStep,
     calculateQuote,
   } = useCalculatorStore()
-  
+
   const [kitchenMeters, setKitchenMeters] = useState(0)
-  
+
   const getServiceEnabled = (type: string) => {
     return services.find((s) => s.service_type === type)?.enabled || false
   }
-  
+
   const handleServiceToggle = (type: string, enabled: boolean, metadata?: any) => {
     toggleService(type, enabled, metadata)
   }
-  
+
   useEffect(() => {
     // Update kitchen service metadata when meters change
     if (kitchenMeters > 0) {
       handleServiceToggle('kitchen_assembly', true, { kitchen_meters: kitchenMeters })
     }
   }, [kitchenMeters])
-  
+
   // Auto-suggest external lift
   const shouldSuggestLift =
     (originFloor > 4 && !originHasElevator) ||
     (destinationFloor > 4 && !destinationHasElevator) ||
     (quote && Number(quote.volume_m3) > 50 && (originFloor > 2 || destinationFloor > 2))
-  
+
   const handleNext = async () => {
     await calculateQuote()
-    setStep(5)
+    setStep(6)
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 50 }}
@@ -68,11 +68,11 @@ export default function StepServices() {
             Wählen Sie optionale Dienstleistungen für Ihren Umzug
           </p>
         </div>
-        
+
         {/* Floor Information */}
         <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <h3 className="font-semibold text-gray-900 mb-4">Stockwerk-Informationen</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Origin */}
             <div>
@@ -97,7 +97,7 @@ export default function StepServices() {
                 <span className="ml-2 text-sm text-gray-700">Aufzug vorhanden</span>
               </label>
             </div>
-            
+
             {/* Destination */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -123,7 +123,7 @@ export default function StepServices() {
             </div>
           </div>
         </div>
-        
+
         {/* Services List */}
         <div className="space-y-4 mb-6">
           {/* Packing Service */}
@@ -135,7 +135,7 @@ export default function StepServices() {
             enabled={getServiceEnabled('packing')}
             onToggle={(enabled) => handleServiceToggle('packing', enabled)}
           />
-          
+
           {/* Disassembly */}
           <ServiceCard
             icon={<Wrench className="w-6 h-6" />}
@@ -145,7 +145,7 @@ export default function StepServices() {
             enabled={getServiceEnabled('disassembly')}
             onToggle={(enabled) => handleServiceToggle('disassembly', enabled)}
           />
-          
+
           {/* HVZ Permit */}
           <ServiceCard
             icon={<Ban className="w-6 h-6" />}
@@ -156,7 +156,7 @@ export default function StepServices() {
             onToggle={(enabled) => handleServiceToggle('hvz_permit', enabled)}
             info="Empfohlen in Großstädten für einfacheres Be- und Entladen"
           />
-          
+
           {/* Kitchen Assembly */}
           <div
             className={clsx(
@@ -207,7 +207,7 @@ export default function StepServices() {
               </div>
             </div>
           </div>
-          
+
           {/* External Lift */}
           {shouldSuggestLift && (
             <motion.div
@@ -227,7 +227,7 @@ export default function StepServices() {
             </motion.div>
           )}
         </div>
-        
+
         {/* Navigation */}
         <div className="flex gap-4">
           <button

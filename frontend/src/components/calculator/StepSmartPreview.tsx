@@ -110,7 +110,7 @@ export default function StepSmartPreview() {
     setInventoryFromPrediction(prediction.typical_items)
 
     // Skip inventory step, go to services
-    setStep(4)
+    setStep(5)
   }
 
   const handleDetailedMode = () => {
@@ -120,7 +120,7 @@ export default function StepSmartPreview() {
     setInventoryFromPrediction(prediction.typical_items)
 
     // Go to inventory step for manual review/editing
-    setStep(5)
+    setStep(4)
   }
 
   if (loading) {

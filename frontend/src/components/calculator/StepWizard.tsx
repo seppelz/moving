@@ -12,9 +12,9 @@ interface StepWizardProps {
 const steps = [
   { number: 1, label: 'Schnellschätzung' },
   { number: 2, label: 'Profil-Fragen' },
-  { number: 3, label: 'Volumen-Schätzung' },
-  { number: 4, label: 'Services' },
-  { number: 5, label: 'Inventar' },
+  { number: 3, label: 'Schätzung' },
+  { number: 4, label: 'Inventar (Detail)' },
+  { number: 5, label: 'Services' },
   { number: 6, label: 'Kontakt' },
 ]
 
@@ -59,7 +59,7 @@ export default function StepWizard({ currentStep }: StepWizardProps) {
                 {step.label}
               </span>
             </div>
-            
+
             {/* Connector line */}
             {index < steps.length - 1 && (
               <div className="flex-1 h-1 mx-4 relative">

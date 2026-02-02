@@ -7,6 +7,7 @@ import StepWizard from '@/components/calculator/StepWizard'
 import StepInstant from '@/components/calculator/StepInstant'
 import StepSmartProfile from '@/components/calculator/StepSmartProfile'
 import StepSmartPreview from '@/components/calculator/StepSmartPreview'
+import StepInventory from '@/components/calculator/StepInventory'
 import StepServices from '@/components/calculator/StepServices'
 import StepContact from '@/components/calculator/StepContact'
 
@@ -14,7 +15,7 @@ export default function Calculator() {
   const { step } = useCalculatorStore((state) => ({
     step: state.step,
   }))
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
       {/* Header */}
@@ -24,20 +25,21 @@ export default function Calculator() {
           <p className="text-gray-600 mt-1">Ihr Umzug, intelligent vereinfacht</p>
         </div>
       </header>
-      
+
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <StepWizard currentStep={step} />
-        
+
         <div className="mt-8">
           {step === 1 && <StepInstant />}
           {step === 2 && <StepSmartProfile />}
           {step === 3 && <StepSmartPreview />}
-          {step === 4 && <StepServices />}
-          {step === 5 && <StepContact />}
+          {step === 4 && <StepInventory />}
+          {step === 5 && <StepServices />}
+          {step === 6 && <StepContact />}
         </div>
       </main>
-      
+
       {/* Footer */}
       <footer className="mt-20 bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
