@@ -6,8 +6,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Minus, ArrowRight, ArrowLeft, Package, Sofa,
-  Bed, UtensilsCrossed, Search, Trash2, Truck,
-  PlusCircle, Tv
+  Bed, UtensilsCrossed, Trash2, Truck,
+  PlusCircle, Tv, LayoutGrid
 } from 'lucide-react'
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { quoteAPI } from '@/services/api'
@@ -27,7 +27,6 @@ export default function StepInventory() {
   const [itemTemplates, setItemTemplates] = useState<ItemTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('living_room')
-  const [searchQuery, setSearchQuery] = useState('')
 
   // Custom item states
   const [showCustomForm, setShowCustomForm] = useState(false)
@@ -50,6 +49,7 @@ export default function StepInventory() {
   }
 
   const categories = [
+    { id: 'selection', label: 'Meine Auswahl', icon: LayoutGrid },
     { id: 'living_room', label: 'Wohnzimmer', icon: Sofa },
     { id: 'bedroom', label: 'Schlafzimmer', icon: Bed },
     { id: 'kitchen', label: 'Küche', icon: UtensilsCrossed },
@@ -57,34 +57,39 @@ export default function StepInventory() {
     { id: 'other', label: 'Sonstiges', icon: Package },
   ]
 
-  const filteredTemplates = useMemo(() => {
-    let filtered = itemTemplates
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(t =>
-        t.name.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query)
-      )
-    } else {
-      filtered = filtered.filter(t => t.category === selectedCategory)
+  const displayItems = useMemo(() => {
+    if (selectedCategory === 'selection') {
+      return inventory.map(item => ({
+        id: item.item_id,
+        name: item.name,
+        volume_m3: item.volume_m3,
+        category: item.category,
+        isCustom: item.item_id.startsWith('custom_')
+      }))
     }
-
-    return filtered
-  }, [itemTemplates, selectedCategory, searchQuery])
+    return itemTemplates
+      .filter(t => t.category === selectedCategory)
+      .map(t => ({
+        id: t.id,
+        name: t.name,
+        volume_m3: t.volume_m3,
+        category: t.category,
+        isCustom: false
+      }))
+  }, [itemTemplates, selectedCategory, inventory])
 
   const getItemQuantity = (itemId: string) => {
     const item = inventory.find((i) => i.item_id === itemId)
     return item?.quantity || 0
   }
 
-  const handleAddItem = (template: ItemTemplate) => {
+  const handleAddItem = (item: { id: string, name: string, volume_m3: any, category: string }) => {
     addInventoryItem({
-      item_id: template.id,
-      name: template.name,
+      item_id: item.id,
+      name: item.name,
       quantity: 1,
-      volume_m3: Number(template.volume_m3),
-      category: template.category,
+      volume_m3: Number(item.volume_m3),
+      category: item.category,
     })
   }
 
@@ -108,6 +113,9 @@ export default function StepInventory() {
     setCustomName('')
     setCustomVolume('1.0')
     setShowCustomForm(false)
+
+    // Switch to selection tab to show the new item
+    setSelectedCategory('selection')
   }
 
   const handleNext = async () => {
@@ -139,53 +147,39 @@ export default function StepInventory() {
                 Was ziehen wir um?
               </h2>
               <p className="text-gray-600">
-                Wählen Sie Ihre Möbel aus oder suchen Sie direkt danach.
+                Wählen Sie Ihre Möbel aus oder fügen Sie eigene Gegenstände hinzu.
               </p>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                className="input-field pl-10 h-12 text-lg"
-                placeholder="Suchen (z.B. Couch, Schrank, Kartons...)"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
             {/* Category Tabs */}
-            {!searchQuery && (
-              <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={clsx(
-                      'flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap border-2',
-                      {
-                        'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-200':
-                          selectedCategory === category.id,
-                        'bg-white border-gray-100 text-gray-600 hover:border-primary-200 hover:bg-primary-50':
-                          selectedCategory !== category.id,
-                      }
-                    )}
-                  >
-                    <category.icon className="w-5 h-5" />
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={clsx(
+                    'flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all whitespace-nowrap border-2',
+                    {
+                      'bg-primary-600 border-primary-600 text-white shadow-lg shadow-primary-200':
+                        selectedCategory === category.id,
+                      'bg-white border-gray-100 text-gray-600 hover:border-primary-200 hover:bg-primary-50':
+                        selectedCategory !== category.id,
+                    }
+                  )}
+                >
+                  <category.icon className="w-5 h-5" />
+                  {category.label}
+                  {category.id === 'selection' && inventory.length > 0 && (
+                    <span className={clsx(
+                      "ml-1 flex items-center justify-center w-5 h-5 text-[10px] rounded-full",
+                      selectedCategory === 'selection' ? "bg-white text-primary-600" : "bg-primary-100 text-primary-600"
+                    )}>
+                      {inventory.length}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
 
             {/* Item Grid */}
             {loading ? (
@@ -200,31 +194,46 @@ export default function StepInventory() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
-                  {filteredTemplates.map((template) => {
-                    const quantity = getItemQuantity(template.id)
+                  {displayItems.length === 0 && selectedCategory === 'selection' && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100"
+                    >
+                      <Package className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-400 font-medium">Noch keine Artikel ausgewählt</p>
+                    </motion.div>
+                  )}
+                  {displayItems.map((item) => {
+                    const quantity = getItemQuantity(item.id)
                     return (
                       <motion.div
                         layout
-                        key={template.id}
+                        key={item.id}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         className={clsx(
-                          'p-4 rounded-2xl border-2 transition-all cursor-pointer group flex flex-col justify-between h-32',
+                          'p-4 rounded-2xl border-2 transition-all cursor-pointer group flex flex-col justify-between h-32 relative',
                           {
                             'border-primary-600 bg-primary-50': quantity > 0,
                             'border-gray-100 bg-white hover:border-primary-200 hover:shadow-md': quantity === 0,
                           }
                         )}
-                        onClick={() => quantity === 0 && handleAddItem(template)}
+                        onClick={() => quantity === 0 && handleAddItem({ ...item, category: item.category || 'other' })}
                       >
                         <div>
                           <h3 className="font-bold text-gray-900 leading-tight group-hover:text-primary-700 transition-colors">
-                            {template.name}
+                            {item.name}
                           </h3>
                           <p className="text-xs text-gray-500 mt-1">
-                            {Number(template.volume_m3).toFixed(1)} m³
+                            {Number(item.volume_m3).toFixed(1)} m³
                           </p>
+                          {item.isCustom && (
+                            <span className="absolute top-2 right-2 text-[8px] font-black uppercase text-primary-500 bg-primary-50 px-1.5 py-0.5 rounded-full border border-primary-100">
+                              Eigener
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex justify-end mt-2">
@@ -235,16 +244,16 @@ export default function StepInventory() {
                           ) : (
                             <div className="flex items-center gap-3 bg-white px-2 py-1 rounded-full border border-primary-200 shadow-sm" onClick={e => e.stopPropagation()}>
                               <button
-                                onClick={() => handleUpdateQuantity(template.id, -1)}
+                                onClick={() => handleUpdateQuantity(item.id, -1)}
                                 className="w-7 h-7 flex items-center justify-center text-primary-600 hover:bg-primary-50 rounded-full"
                               >
-                                <Minus className="w-4 h-4" />
+                                {quantity === 1 && selectedCategory === 'selection' ? <Trash2 className="w-4 h-4" /> : <Minus className="w-4 h-4" />}
                               </button>
                               <span className="font-bold text-primary-900 min-w-[20px] text-center">
                                 {quantity}
                               </span>
                               <button
-                                onClick={() => handleUpdateQuantity(template.id, 1)}
+                                onClick={() => handleUpdateQuantity(item.id, 1)}
                                 className="w-7 h-7 flex items-center justify-center bg-primary-600 text-white rounded-full hover:bg-primary-700"
                               >
                                 <Plus className="w-4 h-4" />
