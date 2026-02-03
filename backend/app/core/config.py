@@ -1,9 +1,9 @@
 """
 Configuration settings for MoveMaster backend
 """
-from typing import List
+from typing import List, Any, Optional, Union
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
@@ -40,6 +40,14 @@ class Settings(BaseSettings):
     SMTP_PORT: int = Field(default=587, env="SMTP_PORT")
     SMTP_USER: str = Field(default="", env="SMTP_USER")
     SMTP_PASSWORD: str = Field(default="", env="SMTP_PASSWORD")
+
+    @field_validator("SMTP_PORT", "ACCESS_TOKEN_EXPIRE_MINUTES", mode="before")
+    @classmethod
+    def empty_string_to_default(cls, v: Any, info: Any) -> Any:
+        if v == "":
+            # Return the default value for the field if it's an empty string
+            return cls.model_fields[info.field_name].default
+        return v
     
     # Security
     SECRET_KEY: str = Field(default="dev-secret-key-change-in-production", env="SECRET_KEY")
