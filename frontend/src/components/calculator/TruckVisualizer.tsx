@@ -46,9 +46,9 @@ export default function TruckVisualizer({
                 />
             </div>
 
-            <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-2">
+            <p className="text-xs opacity-70 text-center flex items-center justify-center gap-2">
                 <Truck className="w-3 h-3" />
-                Empfehlung: <span className="font-bold text-gray-700">{recommendation}</span>
+                Empfehlung: <span className="font-bold">{recommendation}</span>
             </p>
         </div>
     )
