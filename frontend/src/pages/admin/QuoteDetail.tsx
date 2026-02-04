@@ -624,7 +624,11 @@ export default function QuoteDetail() {
                             <div className="text-sm text-gray-600 mt-1">
                               {Object.entries(service.metadata).map(([key, value]) => (
                                 <span key={key} className="mr-3">
-                                  {translateMetadataKey(key)}: {String(value)}
+                                  {translateMetadataKey(key)}: {
+                                    typeof value === 'boolean'
+                                      ? (value ? 'Ja' : 'Nein')
+                                      : (key === 'kitchen_meters' ? `${value}m` : String(value))
+                                  }
                                 </span>
                               ))}
                             </div>
@@ -930,6 +934,7 @@ function translateMetadataKey(key: string): string {
     hours: 'Stunden',
     persons: 'Personen',
     meters: 'Meter',
+    kitchen_meters: 'Küchenmeter',
     boxes: 'Kartons',
     floor: 'Etage',
     has_elevator: 'Aufzug vorhanden'
