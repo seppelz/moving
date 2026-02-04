@@ -153,6 +153,23 @@ export default function StepSmartPreview() {
     )
   }
 
+  const translateRoom = (room: string) => {
+    const translations: Record<string, string> = {
+      living_room: 'Wohnzimmer',
+      bedroom: 'Schlafzimmer',
+      kitchen: 'Küche',
+      office: 'Büro',
+      bathroom: 'Bad',
+      hallway: 'Flur',
+      basement: 'Keller',
+      other: 'Sonstiges',
+      balcony: 'Balkon',
+      dining_room: 'Esszimmer',
+      kids_room: 'Kinderzimmer'
+    }
+    return translations[room] || room.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+  }
+
   const displayVolume = adjustedVolume || prediction.predicted_volume_m3
   const [minVolume, maxVolume] = prediction.volume_range
 
@@ -231,8 +248,8 @@ export default function StepSmartPreview() {
                 key={room}
                 className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200"
               >
-                <div className="text-sm text-gray-600 capitalize mb-1">
-                  {room.replace('_', ' ')}
+                <div className="text-sm text-gray-600 mb-1">
+                  {translateRoom(room)}
                 </div>
                 <div className="text-2xl font-bold text-gray-900">
                   {volume} m³

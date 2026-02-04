@@ -624,7 +624,7 @@ export default function QuoteDetail() {
                             <div className="text-sm text-gray-600 mt-1">
                               {Object.entries(service.metadata).map(([key, value]) => (
                                 <span key={key} className="mr-3">
-                                  {key}: {String(value)}
+                                  {translateMetadataKey(key)}: {String(value)}
                                 </span>
                               ))}
                             </div>
@@ -687,7 +687,7 @@ export default function QuoteDetail() {
                 {breakdown.breakdown.services_cost.min > 0 && (
                   <BreakdownRow
                     label="Zusatzleistungen"
-                    tooltip={breakdown.quote_details.services_enabled.join(', ')}
+                    tooltip={breakdown.quote_details.services_enabled.map(t => translateService(t)).join(', ')}
                     minValue={breakdown.breakdown.services_cost.min}
                     maxValue={breakdown.breakdown.services_cost.max}
                     highlight
@@ -918,6 +918,21 @@ function translateService(serviceType: string): string {
     hvz_permit: 'Halteverbotszone (HVZ)',
     kitchen_assembly: 'Küchenmontage',
     external_lift: 'Außenaufzug (Möbellift)',
+    cleaning: 'Endreinigung',
+    waste_disposal: 'Entsorgung',
+    storage: 'Einlagerung'
   }
   return translations[serviceType] || serviceType
+}
+
+function translateMetadataKey(key: string): string {
+  const translations: Record<string, string> = {
+    hours: 'Stunden',
+    persons: 'Personen',
+    meters: 'Meter',
+    boxes: 'Kartons',
+    floor: 'Etage',
+    has_elevator: 'Aufzug vorhanden'
+  }
+  return translations[key] || key
 }
