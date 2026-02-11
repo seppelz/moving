@@ -19,7 +19,7 @@ router = APIRouter()
 
 class ProfileQuestionRequest(BaseModel):
     """User answers to profile questions"""
-    apartment_size: str = Field(..., description="studio, 1br, 2br, 3br, 4br")
+    apartment_size: str = Field(..., description="studio, 1br, 2br, 3br, 4br+")
     household_type: str = Field(..., description="single, couple, young_professional, family_kids, etc.")
     furnishing_level: str = Field(default="normal", description="minimal, normal, full")
     has_home_office: Optional[bool] = Field(default=None)

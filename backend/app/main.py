@@ -47,15 +47,27 @@ async def startup_migrations():
     logger.info("Checking for database schema updates...")
     try:
         with engine.begin() as conn:
-            try:
-                conn.execute(text("ALTER TABLE quotes ADD COLUMN is_fixed_price BOOLEAN DEFAULT FALSE"))
-                logger.info("✓ Database updated: Added 'is_fixed_price' column to quotes table")
-            except Exception as e:
-                error_msg = str(e).lower()
-                if "already exists" in error_msg or "duplicate column" in error_msg:
-                    logger.info("- Column 'is_fixed_price' already exists, skipping")
-                else:
-                    logger.warning(f"- Could not check/add 'is_fixed_price' column: {e}")
+            new_columns = [
+                ("is_fixed_price", "BOOLEAN DEFAULT FALSE"),
+                ("moving_date", "VARCHAR"),
+                ("wants_callback", "BOOLEAN DEFAULT FALSE"),
+                ("wants_moving_tips", "BOOLEAN DEFAULT FALSE"),
+                ("actual_cost", "NUMERIC(10,2)"),
+                ("actual_volume_m3", "NUMERIC(10,2)"),
+                ("actual_hours", "NUMERIC(10,2)"),
+                ("feedback_notes", "VARCHAR"),
+                ("feedback_rating", "NUMERIC(2,1)"),
+            ]
+            for col_name, col_type in new_columns:
+                try:
+                    conn.execute(text(f"ALTER TABLE quotes ADD COLUMN {col_name} {col_type}"))
+                    logger.info(f"✓ Database updated: Added '{col_name}' column")
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    if "already exists" in error_msg or "duplicate column" in error_msg:
+                        pass  # Column already exists
+                    else:
+                        logger.warning(f"- Could not add '{col_name}' column: {e}")
     except Exception as e:
         logger.error(f"✗ Schema update failed: {e}")
 
@@ -160,7 +172,8 @@ except Exception as e:
 # Import and include routers
 try:
     logger.info("Loading API routers...")
-    from app.api.v1 import quote, admin, smart_quote
+    from app.api.v1 import quote, admin, smart_quote, auth
+    app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
     app.include_router(quote.router, prefix="/api/v1/quote", tags=["quotes"])
     app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
     app.include_router(smart_quote.router, prefix="/api/v1/smart", tags=["smart-prediction"])

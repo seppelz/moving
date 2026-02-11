@@ -163,7 +163,7 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               <MetricRow
                 label="Durchschn. Volumen"
-                value={`${analytics?.average_volume_m3.toFixed(1) || 0} m³`}
+                value={`${analytics?.average_volume_m3 != null ? analytics.average_volume_m3.toFixed(1) : '0'} m³`}
                 icon={<BarChart3 className="w-4 h-4 text-gray-400" />}
               />
               <MetricRow

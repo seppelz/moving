@@ -61,12 +61,17 @@ class QuoteCalculateRequest(BaseModel):
     origin_has_elevator: Optional[bool] = False
     destination_has_elevator: Optional[bool] = False
     services: Optional[List[Service]] = []
+    company_slug: Optional[str] = "default"
 
 
 class QuoteCalculateResponse(BaseModel):
-    """Response with calculated quote"""
-    min_price: Decimal
-    max_price: Decimal
+    """Response with calculated quote (prices include VAT)"""
+    min_price: Decimal  # Brutto (incl. MwSt)
+    max_price: Decimal  # Brutto (incl. MwSt)
+    min_price_netto: Optional[Decimal] = None
+    max_price_netto: Optional[Decimal] = None
+    vat_amount: Optional[Dict[str, Decimal]] = None
+    vat_rate: Optional[float] = None
     distance_km: Decimal
     estimated_hours: Decimal
     volume_m3: Decimal
@@ -79,6 +84,9 @@ class QuoteSubmitRequest(BaseModel):
     customer_email: EmailStr
     customer_phone: Optional[str] = None
     customer_name: Optional[str] = None
+    moving_date: Optional[str] = None  # ISO date string (YYYY-MM-DD)
+    wants_callback: Optional[bool] = False
+    wants_moving_tips: Optional[bool] = False
     origin: Address
     destination: Address
     inventory: List[InventoryItem]

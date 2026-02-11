@@ -51,6 +51,29 @@ export default function AdminQuotes() {
     }
   }
 
+  const handleExportCSV = () => {
+    const headers = ['Datum', 'Name', 'E-Mail', 'Von PLZ', 'Nach PLZ', 'Volumen m³', 'Min Preis', 'Max Preis', 'Status']
+    const rows = filteredQuotes.map((q) => [
+      new Date(q.created_at).toLocaleDateString('de-DE'),
+      q.customer_name || '',
+      q.customer_email,
+      q.origin_address.postal_code,
+      q.destination_address.postal_code,
+      q.volume_m3,
+      q.min_price,
+      q.max_price,
+      q.status,
+    ])
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `angebote_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   const filteredQuotes = quotes.filter((quote) => {
     if (!searchTerm) return true
     const search = searchTerm.toLowerCase()
@@ -78,7 +101,7 @@ export default function AdminQuotes() {
               </Link>
               <h1 className="text-3xl font-bold text-gray-900">Alle Angebote</h1>
             </div>
-            <button className="btn-primary flex items-center gap-2">
+            <button onClick={handleExportCSV} className="btn-primary flex items-center gap-2">
               <Download className="w-5 h-5" />
               Export CSV
             </button>

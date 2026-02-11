@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(default="dev-secret-key-change-in-production", env="SECRET_KEY")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ADMIN_USERNAME: str = Field(default="admin", env="ADMIN_USERNAME")
+    ADMIN_PASSWORD: str = Field(default="movemaster2026", env="ADMIN_PASSWORD")
     
     # Pricing Defaults (German Market - Validated January 2026)
     # See backend/docs/PRICING_RESEARCH.md for full market analysis
@@ -77,6 +79,9 @@ class Settings(BaseSettings):
     HOURLY_LABOR_MAX: float = 80.0  # ⚠️ Upper quartile
     MIN_MOVERS: int = 2              # Standard 2-man crew minimum
     
+    # VAT (Mehrwertsteuer) - German legal requirement for B2C
+    VAT_RATE: float = 0.19  # 19% standard German VAT
+
     # Surcharges and additional services
     FLOOR_SURCHARGE_PERCENT: float = 0.15  # 15% per floor above 2nd without elevator
     
@@ -108,7 +113,36 @@ class Settings(BaseSettings):
     SEASONAL_PEAK_MULTIPLIER: float = 1.15         # +15% during peak season
     SEASONAL_OFFPEAK_MONTHS: list = [12, 1, 2]    # December through February
     SEASONAL_OFFPEAK_MULTIPLIER: float = 1.0       # No discount (lease changeovers)
-    
+
+    # Weekend/holiday surcharges
+    WEEKEND_SURCHARGE_PERCENT: float = 0.25        # +25% for Saturday moves
+    HOLIDAY_SURCHARGE_PERCENT: float = 0.50        # +50% for public holiday moves
+
+    # Packing materials (per m³ when packing service enabled)
+    PACKING_MATERIALS_PER_M3: float = 8.0          # €6-12 market range - boxes, tape, wrapping
+
+    # Heavy/special item surcharges (flat fee per item)
+    HEAVY_ITEM_SURCHARGES: dict = {
+        "piano": 150.0,           # Klavier/Flügel - requires specialist handling
+        "safe": 120.0,            # Tresor - extreme weight
+        "aquarium": 80.0,         # Aquarium - fragile + heavy
+        "gym_equipment": 60.0,    # Fitnessgeräte - bulky + heavy
+        "marble_table": 80.0,     # Marmortisch - fragile + heavy
+        "antique": 100.0,         # Antiquitäten - high value, extra care
+    }
+
+    # Parking/long carry surcharge
+    LONG_CARRY_PER_10M: float = 35.0              # €35 per 10m carry distance beyond 10m from truck
+
+    # Disposal/Entrümpelung
+    DISPOSAL_BASE_COST: float = 80.0              # Base fee for disposal service
+    DISPOSAL_PER_M3: float = 45.0                 # €35-60/m³ for disposal items
+
+    # Transport insurance
+    INSURANCE_BASIC_FLAT: float = 49.0            # Basic coverage (up to €50k, flat rate)
+    INSURANCE_PREMIUM_PERCENT: float = 0.01       # Premium: 1% of declared value
+    INSURANCE_PREMIUM_MIN: float = 89.0           # Minimum premium insurance cost
+
     class Config:
         env_file = ".env"
         case_sensitive = True

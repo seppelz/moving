@@ -28,6 +28,9 @@ class Quote(Base):
     customer_email = Column(String, nullable=False)
     customer_phone = Column(String, nullable=True)
     customer_name = Column(String, nullable=True)
+    moving_date = Column(String, nullable=True)  # ISO date string
+    wants_callback = Column(Boolean, default=False)
+    wants_moving_tips = Column(Boolean, default=False)
     
     # Move details
     origin_address = Column(JSON, nullable=False)  # {address, postal_code, city, floor, has_elevator}
@@ -48,6 +51,13 @@ class Quote(Base):
     status = Column(Enum(QuoteStatus), default=QuoteStatus.DRAFT, nullable=False, index=True)
     is_fixed_price = Column(Boolean, default=False, nullable=False)
     pdf_url = Column(String, nullable=True)
+
+    # Feedback / accuracy tracking (filled post-move)
+    actual_cost = Column(Numeric(10, 2), nullable=True)
+    actual_volume_m3 = Column(Numeric(10, 2), nullable=True)
+    actual_hours = Column(Numeric(10, 2), nullable=True)
+    feedback_notes = Column(String, nullable=True)
+    feedback_rating = Column(Numeric(2, 1), nullable=True)  # 1.0-5.0 stars
     
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)

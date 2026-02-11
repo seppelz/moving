@@ -19,7 +19,7 @@ interface PricingBreakdown {
     volume_cost: { min: number; max: number }
     distance_cost: { min: number; max: number }
     labor_cost: { min: number; max: number }
-    floor_surcharge: number
+    floor_surcharge: { min: number; max: number } | number
     services_cost: { min: number; max: number }
     man_hours: number
     crew_size: number
@@ -241,7 +241,10 @@ export default function QuoteDetail() {
                 <Download className="w-5 h-5" />
                 PDF herunterladen
               </button>
-              <button className="btn-secondary inline-flex items-center gap-2">
+              <button
+                onClick={() => handleStatusChange('sent')}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
                 <Mail className="w-5 h-5" />
                 Per E-Mail senden
               </button>
@@ -677,15 +680,20 @@ export default function QuoteDetail() {
                 />
 
                 {/* Floor Surcharge */}
-                {breakdown.breakdown.floor_surcharge > 0 && (
-                  <BreakdownRow
-                    label="Etagenzuschlag"
-                    tooltip={breakdown.configuration_used.floor_surcharge}
-                    minValue={breakdown.breakdown.floor_surcharge}
-                    maxValue={breakdown.breakdown.floor_surcharge}
-                    highlight
-                  />
-                )}
+                {(() => {
+                  const fs = breakdown.breakdown.floor_surcharge
+                  const fsMin = typeof fs === 'object' ? fs.min : fs
+                  const fsMax = typeof fs === 'object' ? fs.max : fs
+                  return fsMax > 0 ? (
+                    <BreakdownRow
+                      label="Etagenzuschlag"
+                      tooltip={breakdown.configuration_used.floor_surcharge}
+                      minValue={fsMin}
+                      maxValue={fsMax}
+                      highlight
+                    />
+                  ) : null
+                })()}
 
                 {/* Services Cost */}
                 {breakdown.breakdown.services_cost.min > 0 && (

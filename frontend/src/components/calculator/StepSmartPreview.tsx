@@ -30,6 +30,7 @@ export default function StepSmartPreview() {
     smartProfile,
     setStep,
     setInventoryFromPrediction,
+    setCameFromInventory,
   } = useCalculatorStore()
 
   const [prediction, setPrediction] = useState<SmartPrediction | null>(null)
@@ -107,8 +108,9 @@ export default function StepSmartPreview() {
   const handleConfirm = () => {
     if (!prediction) return
 
-    // Convert prediction to inventory format and go directly to services
-    setInventoryFromPrediction(prediction.typical_items)
+    // Convert prediction to inventory format, scaling to adjusted volume if applicable
+    setInventoryFromPrediction(prediction.typical_items, adjustedVolume || undefined)
+    setCameFromInventory(false)
 
     // Skip inventory step, go to services
     setStep(5)
@@ -117,8 +119,9 @@ export default function StepSmartPreview() {
   const handleDetailedMode = () => {
     if (!prediction) return
 
-    // Convert prediction to inventory format
-    setInventoryFromPrediction(prediction.typical_items)
+    // Convert prediction to inventory format, scaling to adjusted volume if applicable
+    setInventoryFromPrediction(prediction.typical_items, adjustedVolume || undefined)
+    setCameFromInventory(true)
 
     // Go to inventory step for manual review/editing
     setStep(4)

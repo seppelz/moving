@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Home, ArrowRight } from 'lucide-react'
+import clsx from 'clsx'
 import { useCalculatorStore } from '@/store/calculatorStore'
 import { ApartmentSize } from '@/types'
 
@@ -172,9 +173,10 @@ export default function StepInstant() {
               <div className="text-sm font-medium opacity-90 mb-2">
                 Geschätzte Kosten
               </div>
-              <div className="text-5xl font-bold mb-2">
+              <div className="text-5xl font-bold mb-1">
                 €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
               </div>
+              <div className="text-xs opacity-70 mb-2">inkl. 19% MwSt.</div>
               <div className="text-sm opacity-80">
                 Entfernung: {Number(quote.distance_km).toFixed(0)} km •
                 Volumen: {Number(quote.volume_m3).toFixed(1)} m³ •
@@ -208,6 +210,3 @@ export default function StepInstant() {
     </motion.div>
   )
 }
-
-// Helper function for clsx
-import clsx from 'clsx'

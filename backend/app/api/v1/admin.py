@@ -19,11 +19,9 @@ from app.schemas.quote import QuoteResponse, QuoteUpdateRequest
 from app.services.pdf_service import pdf_service
 from app.services.email_service import email_service
 
-router = APIRouter()
+from app.api.v1.auth import verify_token
 
-
-# TODO: Add proper authentication middleware
-# For now, these endpoints are unprotected for development
+router = APIRouter(dependencies=[Depends(verify_token)])
 
 
 @router.get("/quotes", response_model=List[QuoteResponse])
@@ -462,22 +460,31 @@ async def get_quote_breakdown(
             detail="Quote not found"
         )
     
-    # Reconstruct pricing breakdown using pricing engine
-    from app.services.pricing_engine import pricing_engine
+    # Reconstruct pricing breakdown using company-specific pricing engine
+    from app.services.pricing_engine import get_pricing_engine_for_company
     from app.schemas.quote import Service
-    
+
+    # Get company for this quote's pricing config
+    company = db.query(Company).filter(Company.id == quote.company_id).first()
+    engine = get_pricing_engine_for_company(company)
+
     # Convert services to proper format
     services = [
         Service(**service) if isinstance(service, dict) else service
         for service in quote.services
     ]
-    
+
     # Approximate travel time for breakdown if not stored (distance / 65km/h for trucks)
-    # This ensures the breakdown remains realistic even without DB migration
     approx_travel_time = Decimal(str(quote.distance_km)) / Decimal('65') if quote.distance_km > 50 else Decimal('1')
-    
+
     # Regenerate quote to get breakdown
-    detailed_quote = pricing_engine.generate_quote(
+    # Parse moving date if available
+    moving_date_parsed = None
+    if quote.moving_date:
+        from datetime import date as date_type
+        moving_date_parsed = quote.moving_date if isinstance(quote.moving_date, date_type) else None
+
+    detailed_quote = engine.generate_quote(
         volume=Decimal(str(quote.volume_m3)),
         distance_km=Decimal(str(quote.distance_km)),
         travel_time_hours=approx_travel_time,
@@ -485,7 +492,10 @@ async def get_quote_breakdown(
         destination_floor=quote.destination_address.get('floor', 0),
         origin_has_elevator=quote.origin_address.get('has_elevator', False),
         destination_has_elevator=quote.destination_address.get('has_elevator', False),
-        services=services
+        services=services,
+        origin_postal_code=quote.origin_address.get('postal_code'),
+        destination_postal_code=quote.destination_address.get('postal_code'),
+        moving_date=moving_date_parsed,
     )
     
     # Add configuration parameters used
@@ -495,15 +505,15 @@ async def get_quote_breakdown(
         'total_min': detailed_quote['min_price'],
         'total_max': detailed_quote['max_price'],
         'configuration_used': {
-            'base_rate_m3': f"€{pricing_engine.base_rate_m3_min}-{pricing_engine.base_rate_m3_max}/m³",
-            'rate_km_near': f"€{pricing_engine.rate_km_near}/km (0-50km)",
-            'rate_km_far': f"€{pricing_engine.rate_km_far}/km (>50km)",
-            'hourly_labor': f"€{pricing_engine.hourly_labor_min}-{pricing_engine.hourly_labor_max}/hour",
-            'min_movers': pricing_engine.min_movers,
-            'floor_surcharge': f"{pricing_engine.floor_surcharge_percent * 100}% per floor",
-            'hvz_permit': f"€{pricing_engine.hvz_permit_cost}",
-            'kitchen_assembly': f"€{pricing_engine.kitchen_assembly_per_meter}/meter",
-            'external_lift': f"€{pricing_engine.external_lift_cost_min}-{pricing_engine.external_lift_cost_max}",
+            'base_rate_m3': f"€{engine.base_rate_m3_min}-{engine.base_rate_m3_max}/m³",
+            'rate_km_near': f"€{engine.rate_km_near}/km (0-50km)",
+            'rate_km_far': f"€{engine.rate_km_far}/km (>50km)",
+            'hourly_labor': f"€{engine.hourly_labor_min}-{engine.hourly_labor_max}/hour",
+            'min_movers': engine.min_movers,
+            'floor_surcharge': f"{engine.floor_surcharge_percent * 100}% per floor",
+            'hvz_permit': f"€{engine.hvz_permit_cost}",
+            'kitchen_assembly': f"€{engine.kitchen_assembly_per_meter}/meter",
+            'external_lift': f"€{engine.external_lift_cost_min}-{engine.external_lift_cost_max}",
         },
         'quote_details': {
             'volume_m3': float(quote.volume_m3),
@@ -515,4 +525,108 @@ async def get_quote_breakdown(
             'destination_has_elevator': quote.destination_address.get('has_elevator', False),
             'services_enabled': [s.get('service_type') for s in quote.services if s.get('enabled')],
         }
+    }
+
+
+# ── Feedback / Accuracy Tracking ────────────────────────────────────
+
+@router.post("/quotes/{quote_id}/feedback")
+async def submit_feedback(
+    quote_id: str,
+    feedback: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Record actual move costs for accuracy validation.
+    Compares quoted vs actual to improve future predictions.
+    """
+    quote = db.query(Quote).filter(Quote.id == quote_id).first()
+    if not quote:
+        raise HTTPException(status_code=404, detail="Quote not found")
+
+    if feedback.get("actual_cost") is not None:
+        quote.actual_cost = feedback["actual_cost"]
+    if feedback.get("actual_volume_m3") is not None:
+        quote.actual_volume_m3 = feedback["actual_volume_m3"]
+    if feedback.get("actual_hours") is not None:
+        quote.actual_hours = feedback["actual_hours"]
+    if feedback.get("feedback_notes") is not None:
+        quote.feedback_notes = feedback["feedback_notes"]
+    if feedback.get("feedback_rating") is not None:
+        quote.feedback_rating = min(max(float(feedback["feedback_rating"]), 1.0), 5.0)
+
+    db.commit()
+    db.refresh(quote)
+
+    # Calculate accuracy metrics
+    accuracy = {}
+    if quote.actual_cost and quote.min_price and quote.max_price:
+        actual = float(quote.actual_cost)
+        quoted_min = float(quote.min_price)
+        quoted_max = float(quote.max_price)
+        accuracy["cost_within_range"] = quoted_min <= actual <= quoted_max
+        accuracy["cost_deviation_percent"] = round(
+            ((actual - (quoted_min + quoted_max) / 2) / ((quoted_min + quoted_max) / 2)) * 100, 1
+        )
+    if quote.actual_volume_m3 and quote.volume_m3:
+        accuracy["volume_deviation_percent"] = round(
+            ((float(quote.actual_volume_m3) - float(quote.volume_m3)) / float(quote.volume_m3)) * 100, 1
+        )
+
+    return {
+        "quote_id": quote_id,
+        "feedback_recorded": True,
+        "accuracy": accuracy
+    }
+
+
+@router.get("/accuracy")
+async def get_accuracy_report(
+    days: int = Query(default=90, ge=7, le=365),
+    db: Session = Depends(get_db)
+):
+    """
+    Aggregate accuracy report comparing quoted vs actual costs.
+    Only includes quotes that have feedback data.
+    """
+    cutoff = datetime.utcnow() - timedelta(days=days)
+    quotes = db.query(Quote).filter(
+        Quote.actual_cost.isnot(None),
+        Quote.created_at >= cutoff
+    ).all()
+
+    if not quotes:
+        return {"period_days": days, "total_with_feedback": 0, "message": "No feedback data available"}
+
+    within_range = 0
+    deviations = []
+    volume_deviations = []
+    ratings = []
+
+    for q in quotes:
+        actual = float(q.actual_cost)
+        qmin = float(q.min_price)
+        qmax = float(q.max_price)
+        mid = (qmin + qmax) / 2
+
+        if qmin <= actual <= qmax:
+            within_range += 1
+        deviations.append(((actual - mid) / mid) * 100)
+
+        if q.actual_volume_m3 and q.volume_m3:
+            volume_deviations.append(
+                ((float(q.actual_volume_m3) - float(q.volume_m3)) / float(q.volume_m3)) * 100
+            )
+        if q.feedback_rating:
+            ratings.append(float(q.feedback_rating))
+
+    total = len(quotes)
+    return {
+        "period_days": days,
+        "total_with_feedback": total,
+        "cost_within_range_percent": round((within_range / total) * 100, 1),
+        "avg_cost_deviation_percent": round(sum(deviations) / len(deviations), 1),
+        "avg_volume_deviation_percent": round(sum(volume_deviations) / len(volume_deviations), 1) if volume_deviations else None,
+        "avg_rating": round(sum(ratings) / len(ratings), 1) if ratings else None,
+        "total_rated": len(ratings),
     }

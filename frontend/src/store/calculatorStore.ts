@@ -23,11 +23,14 @@ interface SmartProfile {
 interface CalculatorState {
   // Current step (1-4 or 2.5 for manual inventory)
   step: number
-  
+
   // Smart Profile Mode
   useSmartMode: boolean
   smartProfile: SmartProfile | null
-  
+
+  // Track which path the user took (for correct back navigation)
+  cameFromInventory: boolean
+
   // Step 1: Basic info
   originPostalCode: string
   destinationPostalCode: string
@@ -36,27 +39,35 @@ interface CalculatorState {
   destinationFloor: number
   originHasElevator: boolean
   destinationHasElevator: boolean
-  
+
   // Step 2: Inventory
   inventory: InventoryItem[]
-  
+
   // Step 3: Services
   services: Service[]
-  
+
   // Step 4: Contact
   customerEmail: string
   customerPhone: string
   customerName: string
-  
+
+  // Moving date
+  movingDate: string
+
+  // Contact preferences
+  wantsCallback: boolean
+  wantsMovingTips: boolean
+
   // Calculated quote
   quote: QuoteCalculateResponse | null
   isCalculating: boolean
   error: string | null
-  
+
   // Actions
   setStep: (step: number) => void
   setUseSmartMode: (use: boolean) => void
   setSmartProfile: (profile: SmartProfile) => void
+  setCameFromInventory: (value: boolean) => void
   setOriginPostalCode: (code: string) => void
   setDestinationPostalCode: (code: string) => void
   setApartmentSize: (size: ApartmentSize | string) => void
@@ -68,19 +79,23 @@ interface CalculatorState {
   removeInventoryItem: (itemId: string) => void
   updateInventoryItemQuantity: (itemId: string, quantity: number) => void
   setInventory: (items: InventoryItem[]) => void
-  setInventoryFromPrediction: (typicalItems: Record<string, any[]>) => void
+  setInventoryFromPrediction: (typicalItems: Record<string, any[]>, targetVolume?: number) => void
   toggleService: (serviceType: string, enabled: boolean, metadata?: Record<string, any>) => void
   setCustomerEmail: (email: string) => void
   setCustomerPhone: (phone: string) => void
   setCustomerName: (name: string) => void
+  setMovingDate: (date: string) => void
+  setWantsCallback: (value: boolean) => void
+  setWantsMovingTips: (value: boolean) => void
   calculateQuote: () => Promise<void>
   reset: () => void
 }
 
 const initialState = {
   step: 1,
-  useSmartMode: true, // Default to smart mode
+  useSmartMode: true,
   smartProfile: null,
+  cameFromInventory: false,
   originPostalCode: '',
   destinationPostalCode: '',
   apartmentSize: null,
@@ -93,6 +108,9 @@ const initialState = {
   customerEmail: '',
   customerPhone: '',
   customerName: '',
+  movingDate: '',
+  wantsCallback: false,
+  wantsMovingTips: false,
   quote: null,
   isCalculating: false,
   error: null,
@@ -104,8 +122,10 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   setStep: (step) => set({ step }),
   
   setUseSmartMode: (use) => set({ useSmartMode: use }),
-  
+
   setSmartProfile: (profile) => set({ smartProfile: profile }),
+
+  setCameFromInventory: (value) => set({ cameFromInventory: value }),
   
   setOriginPostalCode: (code) => set({ originPostalCode: code }),
   
@@ -158,10 +178,10 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   
   setInventory: (items) => set({ inventory: items }),
   
-  setInventoryFromPrediction: (typicalItems) => {
+  setInventoryFromPrediction: (typicalItems, targetVolume?) => {
     // Convert prediction format to inventory items
     const inventory: InventoryItem[] = []
-    
+
     Object.entries(typicalItems).forEach(([room, items]) => {
       (items as any[]).forEach((item) => {
         inventory.push({
@@ -173,7 +193,18 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
         })
       })
     })
-    
+
+    // If a target volume was provided (from adjustments), scale item volumes proportionally
+    if (targetVolume && targetVolume > 0) {
+      const currentTotal = inventory.reduce((sum, i) => sum + i.volume_m3 * i.quantity, 0)
+      if (currentTotal > 0) {
+        const scaleFactor = targetVolume / currentTotal
+        inventory.forEach((item) => {
+          item.volume_m3 = Math.round(item.volume_m3 * scaleFactor * 100) / 100
+        })
+      }
+    }
+
     set({ inventory })
   },
   
@@ -202,8 +233,14 @@ export const useCalculatorStore = create<CalculatorState>((set, get) => ({
   setCustomerEmail: (email) => set({ customerEmail: email }),
   
   setCustomerPhone: (phone) => set({ customerPhone: phone }),
-  
+
   setCustomerName: (name) => set({ customerName: name }),
+
+  setMovingDate: (date) => set({ movingDate: date }),
+
+  setWantsCallback: (value) => set({ wantsCallback: value }),
+
+  setWantsMovingTips: (value) => set({ wantsMovingTips: value }),
   
   calculateQuote: async () => {
     const state = get()

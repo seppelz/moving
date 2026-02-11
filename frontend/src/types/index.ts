@@ -54,8 +54,12 @@ export interface QuoteCalculateRequest {
 }
 
 export interface QuoteCalculateResponse {
-  min_price: number
-  max_price: number
+  min_price: number  // Brutto (incl. MwSt)
+  max_price: number  // Brutto (incl. MwSt)
+  min_price_netto?: number
+  max_price_netto?: number
+  vat_amount?: { min: number; max: number }
+  vat_rate?: number
   distance_km: number
   estimated_hours: number
   volume_m3: number
@@ -63,7 +67,7 @@ export interface QuoteCalculateResponse {
     volume_cost: { min: number; max: number }
     distance_cost: { min: number; max: number }
     labor_cost: { min: number; max: number }
-    floor_surcharge: number
+    floor_surcharge: { min: number; max: number } | number
     services_cost: { min: number; max: number }
   }
   suggestions?: {
@@ -77,6 +81,9 @@ export interface QuoteSubmitRequest {
   customer_email: string
   customer_phone?: string
   customer_name?: string
+  moving_date?: string
+  wants_callback?: boolean
+  wants_moving_tips?: boolean
   origin: Address
   destination: Address
   inventory: InventoryItem[]

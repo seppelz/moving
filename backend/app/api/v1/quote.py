@@ -11,6 +11,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.schemas.quote import (
     QuoteCalculateRequest,
     QuoteCalculateResponse,
@@ -20,7 +21,7 @@ from app.schemas.quote import (
     RoomTemplateResponse,
     ApartmentSize
 )
-from app.services.pricing_engine import pricing_engine
+from app.services.pricing_engine import pricing_engine, get_pricing_engine_for_company
 from app.services.maps_service import maps_service
 from app.services.email_service import email_service
 from app.models.quote import Quote, QuoteStatus
@@ -97,9 +98,13 @@ async def calculate_quote(
             detail="Either volume_m3 or apartment_size must be provided"
         )
     
+    # Use company-specific pricing if available
+    company = db.query(Company).filter(Company.slug == (request.company_slug or "default")).first()
+    engine = get_pricing_engine_for_company(company)
+
     # Calculate quote
     logger.info(f"CALCULATE_QUOTE: Volume={volume}, Distance={distance_km}, Duration={duration_hours}")
-    quote_data = pricing_engine.generate_quote(
+    quote_data = engine.generate_quote(
         volume=volume,
         distance_km=distance_km,
         travel_time_hours=duration_hours or Decimal('0'),
@@ -107,9 +112,11 @@ async def calculate_quote(
         destination_floor=request.destination_floor or 0,
         origin_has_elevator=request.origin_has_elevator or False,
         destination_has_elevator=request.destination_has_elevator or False,
-        services=request.services or []
+        services=request.services or [],
+        origin_postal_code=request.origin_postal_code,
+        destination_postal_code=request.destination_postal_code,
     )
-    
+
     logger.info(f"CALCULATE_QUOTE_RESULT: Estimated Hours={quote_data['estimated_hours']}")
     return QuoteCalculateResponse(**quote_data)
 
@@ -136,25 +143,37 @@ async def submit_quote(
         db.commit()
         db.refresh(company)
     
+    # Use company-specific pricing engine
+    engine = get_pricing_engine_for_company(company)
+
     # Calculate total volume from inventory
-    volume = pricing_engine.calculate_volume(request.inventory)
-    
+    volume = engine.calculate_volume(request.inventory)
+
     # Get route info
     route_info = maps_service.get_route_info(
         request.origin.postal_code,
         request.destination.postal_code
     )
-    
+
     if not route_info:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not calculate route"
         )
-    
+
     distance_km = route_info["distance_km"]
-    
+
     # Generate quote
-    quote_data = pricing_engine.generate_quote(
+    # Parse moving date if provided
+    moving_date_parsed = None
+    if request.moving_date:
+        from datetime import date as date_type
+        try:
+            moving_date_parsed = date_type.fromisoformat(request.moving_date)
+        except (ValueError, TypeError):
+            pass
+
+    quote_data = engine.generate_quote(
         volume=volume,
         distance_km=distance_km,
         travel_time_hours=route_info.get("duration_hours", Decimal('0')),
@@ -162,7 +181,10 @@ async def submit_quote(
         destination_floor=request.destination.floor or 0,
         origin_has_elevator=request.origin.has_elevator or False,
         destination_has_elevator=request.destination.has_elevator or False,
-        services=request.services
+        services=request.services,
+        origin_postal_code=request.origin.postal_code,
+        destination_postal_code=request.destination.postal_code,
+        moving_date=moving_date_parsed,
     )
     
     # Create quote in database
@@ -175,6 +197,9 @@ async def submit_quote(
         customer_email=request.customer_email,
         customer_phone=request.customer_phone,
         customer_name=request.customer_name,
+        moving_date=request.moving_date,
+        wants_callback=request.wants_callback,
+        wants_moving_tips=request.wants_moving_tips,
         origin_address=request.origin.model_dump(),
         destination_address=request.destination.model_dump(),
         distance_km=distance_km,

@@ -89,14 +89,17 @@ class SmartVolumePredictor:
         }
     
     def _find_best_profile(
-        self, 
-        apartment_size: str, 
-        household_type: str, 
+        self,
+        apartment_size: str,
+        household_type: str,
         furnishing_level: str
     ) -> Optional[ApartmentProfile]:
         """Find the best matching profile"""
+        # Normalize apartment_size: '4br+' -> '4br' for DB compatibility
+        normalized_size = apartment_size.rstrip('+')
+
         # Try exact match first
-        profile_key = f"{apartment_size}_{household_type}_{furnishing_level}"
+        profile_key = f"{normalized_size}_{household_type}_{furnishing_level}"
         profile = self.db.query(ApartmentProfile).filter(
             ApartmentProfile.profile_key == profile_key
         ).first()
@@ -108,17 +111,17 @@ class SmartVolumePredictor:
             return profile
         
         # Try without furnishing level
-        profile_key_alt = f"{apartment_size}_{household_type}_normal"
+        profile_key_alt = f"{normalized_size}_{household_type}_normal"
         profile = self.db.query(ApartmentProfile).filter(
             ApartmentProfile.profile_key == profile_key_alt
         ).first()
-        
+
         if profile:
             return profile
-        
+
         # Fallback to just apartment size + household
         profiles = self.db.query(ApartmentProfile).filter(
-            ApartmentProfile.apartment_size == apartment_size,
+            ApartmentProfile.apartment_size == normalized_size,
             ApartmentProfile.household_type == household_type
         ).all()
         

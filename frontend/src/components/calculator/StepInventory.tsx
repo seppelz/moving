@@ -121,7 +121,10 @@ export default function StepInventory() {
 
   const handleNext = async () => {
     await calculateQuote()
-    setStep(5) // Move to Services
+    const { error } = useCalculatorStore.getState()
+    if (!error) {
+      setStep(5) // Move to Services
+    }
   }
 
   const totalVolume = inventory.reduce(

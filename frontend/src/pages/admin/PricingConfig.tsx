@@ -528,6 +528,7 @@ export default function PricingConfig() {
                     €{calculateExampleTotal(config, 'min')} - €{calculateExampleTotal(config, 'max')}
                   </span>
                 </div>
+                <div className="text-xs text-gray-500 text-right mt-1">inkl. 19% MwSt.</div>
               </div>
             </div>
             
@@ -768,7 +769,8 @@ function calculateExampleTotal(config: PricingConfig, type: 'min' | 'max'): stri
   const volumeCost = 40 * (type === 'min' ? config.base_rate_m3_min : config.base_rate_m3_max)
   const distanceCost = 50 * config.rate_km_near
   const laborCost = 4 * (type === 'min' ? config.hourly_labor_min : config.hourly_labor_max) * config.min_movers
-  
-  const total = volumeCost + distanceCost + laborCost
-  return total.toFixed(0)
+
+  const netto = volumeCost + distanceCost + laborCost
+  const brutto = netto * 1.19 // 19% MwSt
+  return brutto.toFixed(0)
 }

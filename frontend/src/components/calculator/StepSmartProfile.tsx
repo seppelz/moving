@@ -32,7 +32,7 @@ export default function StepSmartProfile() {
     { value: '1br', label: '1 Zimmer', description: '~15-20m³', icon: Home },
     { value: '2br', label: '2 Zimmer', description: '~30-40m³', icon: Building },
     { value: '3br', label: '3 Zimmer', description: '~50-65m³', icon: Building2 },
-    { value: '4br', label: '4+ Zimmer', description: '~70m³+', icon: Castle },
+    { value: '4br+', label: '4+ Zimmer', description: '~70m³+', icon: Castle },
   ]
   
   const householdTypes = [

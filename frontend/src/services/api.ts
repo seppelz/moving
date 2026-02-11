@@ -21,6 +21,27 @@ const api = axios.create({
   },
 })
 
+// Attach JWT token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token')
+  if (token && config.url?.includes('/admin')) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
+// Redirect to login on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && window.location.pathname.startsWith('/admin')) {
+      localStorage.removeItem('admin_token')
+      window.location.href = '/admin/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export const quoteAPI = {
   /**
    * Calculate instant quote (Step 1)
@@ -218,6 +239,27 @@ export const adminAPI = {
   getQuoteBreakdown: async (quoteId: string) => {
     const response = await api.get(`/api/v1/admin/quotes/${quoteId}/breakdown`)
     return response.data
+  },
+}
+
+export const authAPI = {
+  login: async (username: string, password: string): Promise<string> => {
+    const response = await api.post('/api/v1/auth/login', { username, password })
+    const token = response.data.access_token
+    localStorage.setItem('admin_token', token)
+    return token
+  },
+
+  logout: () => {
+    localStorage.removeItem('admin_token')
+  },
+
+  isAuthenticated: (): boolean => {
+    return !!localStorage.getItem('admin_token')
+  },
+
+  getToken: (): string | null => {
+    return localStorage.getItem('admin_token')
   },
 }
 

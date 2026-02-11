@@ -15,6 +15,9 @@ export default function StepContact() {
     customerEmail,
     customerPhone,
     customerName,
+    wantsCallback,
+    wantsMovingTips,
+    movingDate,
     originPostalCode,
     destinationPostalCode,
     originFloor,
@@ -27,6 +30,8 @@ export default function StepContact() {
     setCustomerEmail,
     setCustomerPhone,
     setCustomerName,
+    setWantsCallback,
+    setWantsMovingTips,
     setStep,
   } = useCalculatorStore()
 
@@ -51,6 +56,9 @@ export default function StepContact() {
         customer_email: customerEmail,
         customer_phone: customerPhone || undefined,
         customer_name: customerName || undefined,
+        moving_date: movingDate || undefined,
+        wants_callback: wantsCallback,
+        wants_moving_tips: wantsMovingTips,
         origin: {
           address: '',
           postal_code: originPostalCode,
@@ -106,9 +114,10 @@ export default function StepContact() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
               <div>
                 <div className="text-sm opacity-90 mb-2">Ihr Angebot</div>
-                <div className="text-4xl font-bold mb-2">
+                <div className="text-4xl font-bold mb-1">
                   €{Math.round(submittedQuote.min_price)} - €{Math.round(submittedQuote.max_price)}
                 </div>
+                <div className="text-xs opacity-70 mb-2">inkl. 19% MwSt.</div>
                 <div className="text-sm opacity-80">
                   Angebots-ID: {submittedQuote.id.slice(0, 8)}...
                 </div>
@@ -177,9 +186,10 @@ export default function StepContact() {
         {quote && (
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-6 rounded-xl mb-6 text-center">
             <div className="text-sm opacity-90 mb-2">Voraussichtliches Angebot</div>
-            <div className="text-4xl font-bold mb-4">
+            <div className="text-4xl font-bold mb-1">
               €{Math.round(Number(quote.min_price))} - €{Math.round(Number(quote.max_price))}
             </div>
+            <div className="text-xs opacity-70 mb-3">inkl. 19% MwSt.</div>
             <TruckVisualizer
               totalVolume={Number(quote.volume_m3)}
               className="bg-white/10 backdrop-blur-md border border-white/20 !text-white !p-4"
@@ -245,6 +255,8 @@ export default function StepContact() {
             <label className="flex items-start gap-3">
               <input
                 type="checkbox"
+                checked={wantsCallback}
+                onChange={(e) => setWantsCallback(e.target.checked)}
                 className="mt-1 w-4 h-4 text-primary-600 rounded"
               />
               <span className="text-sm text-gray-700">
@@ -255,6 +267,8 @@ export default function StepContact() {
             <label className="flex items-start gap-3">
               <input
                 type="checkbox"
+                checked={wantsMovingTips}
+                onChange={(e) => setWantsMovingTips(e.target.checked)}
                 className="mt-1 w-4 h-4 text-primary-600 rounded"
               />
               <span className="text-sm text-gray-700">
