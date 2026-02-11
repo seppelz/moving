@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 8000
 
 # Run migrations and start application
-CMD ["sh", "-c", "alembic upgrade head && python -m app.utils.seed_profiles && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "alembic upgrade head || true; python -m app.utils.seed_profiles || true; uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
