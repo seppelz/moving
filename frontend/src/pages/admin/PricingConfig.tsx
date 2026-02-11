@@ -270,7 +270,6 @@ export default function PricingConfig() {
                 min={20} max={60} step={0.5} unit="€"
                 helpText="Basispreis für Premium-Service"
               />
-              <InfoBox text="Marktvergleich (2026): Budget €20-28, Mittelklasse €25-40, Premium €35-50" />
             </Section>
 
             {/* ── Distance Rates ──────────────────────── */}
@@ -296,7 +295,6 @@ export default function PricingConfig() {
                 min={30} max={100} step={10} unit="km"
                 helpText="Ab dieser Distanz gilt der Fernpreis"
               />
-              <InfoBox text="Marktvergleich: Nahbereich €1.50-2.50, Fernbereich €0.80-1.20" />
             </Section>
 
             {/* ── Labor Costs ─────────────────────────── */}
@@ -322,15 +320,6 @@ export default function PricingConfig() {
                 min={2} max={4} step={1} unit="Pers."
                 helpText="Minimum Crew-Größe. Wird bei großen Volumen automatisch auf 3-4 erhöht."
               />
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
-                  <div className="text-xs text-orange-800">
-                    <strong>Hinweis:</strong> Aktuelle Werte (€{config.hourly_labor_min}-{config.hourly_labor_max}) sind im oberen Quartil.
-                    Marktdurchschnitt: €45-65. Erwägen Sie eine Anpassung für bessere Wettbewerbsfähigkeit.
-                  </div>
-                </div>
-              </div>
             </Section>
 
             {/* ── Floor Surcharge ─────────────────────── */}
@@ -383,7 +372,6 @@ export default function PricingConfig() {
                 min={4} max={15} step={1} unit="€/m³"
                 helpText="Kartons, Klebeband, Luftpolsterfolie etc. Wird nur berechnet wenn Packservice aktiviert."
               />
-              <InfoBox text="Marktvergleich: HVZ €80-150, Küche €35-60/m, Außenaufzug €250-600, Verpackung €6-12/m³" />
             </Section>
 
             {/* ── Disposal / Long Carry ───────────────── */}
@@ -707,16 +695,6 @@ function ToggleSwitch({
   )
 }
 
-function InfoBox({ text }: { text: string }) {
-  return (
-    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-      <div className="flex items-start gap-2">
-        <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <div className="text-xs text-blue-800"><strong>Marktvergleich:</strong> {text.replace('Marktvergleich (2026): ', '').replace('Marktvergleich: ', '')}</div>
-      </div>
-    </div>
-  )
-}
 
 function PreviewRow({ label, value }: { label: string; value: string }) {
   return (
