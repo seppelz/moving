@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom'
 import {
   ChevronLeft, Save, RotateCcw, TrendingUp,
   Settings, AlertCircle, CheckCircle, Package, Truck,
-  Clock, Layers, Wrench, Info, MapPin, Calendar,
-  Shield, Trash2, Weight, Sun, CloudSun
+  Clock, Layers, Wrench, Info, Calendar,
+  Shield, Trash2, Weight
 } from 'lucide-react'
 import { adminAPI } from '@/services/api'
 import clsx from 'clsx'
