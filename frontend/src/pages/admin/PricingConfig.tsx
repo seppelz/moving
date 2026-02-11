@@ -67,12 +67,12 @@ interface PricingConfig {
 }
 
 const HEAVY_ITEM_LABELS: Record<string, string> = {
-  piano: 'Klavier/Fluegel',
+  piano: 'Klavier/Flügel',
   safe: 'Tresor',
   aquarium: 'Aquarium',
-  gym_equipment: 'Fitnessgeraete',
+  gym_equipment: 'Fitnessgeräte',
   marble_table: 'Marmortisch',
-  antique: 'Antiquitaeten',
+  antique: 'Antiquitäten',
 }
 
 export default function PricingConfig() {
@@ -217,7 +217,7 @@ export default function PricingConfig() {
                   className="btn-secondary inline-flex items-center gap-2"
                 >
                   <RotateCcw className="w-5 h-5" />
-                  Zuruecksetzen
+                  Zurücksetzen
                 </button>
               )}
               <button
@@ -229,7 +229,7 @@ export default function PricingConfig() {
                 )}
               >
                 <Save className="w-5 h-5" />
-                {saving ? 'Speichern...' : 'Aenderungen speichern'}
+                {saving ? 'Speichern...' : 'Änderungen speichern'}
               </button>
             </div>
           </div>
@@ -255,22 +255,22 @@ export default function PricingConfig() {
           <div className="lg:col-span-2 space-y-6">
 
             {/* ── Volume-Based Pricing ────────────────── */}
-            <Section icon={<Package className="w-5 h-5 text-primary-600" />} title="Volumenbasierte Preise (pro m\u00B3)">
+            <Section icon={<Package className="w-5 h-5 text-primary-600" />} title="Volumenbasierte Preise (pro m³)">
               <NumberInput
-                label="Mindestpreis pro m\u00B3"
+                label="Mindestpreis pro m³"
                 value={config.base_rate_m3_min}
                 onChange={(val) => updateConfig('base_rate_m3_min', val)}
-                min={15} max={50} step={0.5} unit="\u20AC"
-                helpText="Basispreis fuer Budget/Standard-Service"
+                min={15} max={50} step={0.5} unit="€"
+                helpText="Basispreis für Budget/Standard-Service"
               />
               <NumberInput
-                label="Hoechstpreis pro m\u00B3"
+                label="Höchstpreis pro m³"
                 value={config.base_rate_m3_max}
                 onChange={(val) => updateConfig('base_rate_m3_max', val)}
-                min={20} max={60} step={0.5} unit="\u20AC"
-                helpText="Basispreis fuer Premium-Service"
+                min={20} max={60} step={0.5} unit="€"
+                helpText="Basispreis für Premium-Service"
               />
-              <InfoBox text="Marktvergleich (2026): Budget \u20AC20-28, Mittelklasse \u20AC25-40, Premium \u20AC35-50" />
+              <InfoBox text="Marktvergleich (2026): Budget €20-28, Mittelklasse €25-40, Premium €35-50" />
             </Section>
 
             {/* ── Distance Rates ──────────────────────── */}
@@ -279,15 +279,15 @@ export default function PricingConfig() {
                 label="Nahbereich (0-50km)"
                 value={config.rate_km_near}
                 onChange={(val) => updateConfig('rate_km_near', val)}
-                min={1.0} max={4.0} step={0.1} unit="\u20AC/km"
-                helpText="Preis pro Kilometer fuer lokale Umzuege. Es wird automatisch eine \u00B110% Spanne berechnet."
+                min={1.0} max={4.0} step={0.1} unit="€/km"
+                helpText="Preis pro Kilometer für lokale Umzüge. Es wird automatisch eine ±10% Spanne berechnet."
               />
               <NumberInput
                 label="Fernbereich (>50km)"
                 value={config.rate_km_far}
                 onChange={(val) => updateConfig('rate_km_far', val)}
-                min={0.5} max={2.0} step={0.1} unit="\u20AC/km"
-                helpText="Reduzierter Preis fuer Langstrecken"
+                min={0.5} max={2.0} step={0.1} unit="€/km"
+                helpText="Reduzierter Preis für Langstrecken"
               />
               <NumberInput
                 label="Schwellenwert"
@@ -296,7 +296,7 @@ export default function PricingConfig() {
                 min={30} max={100} step={10} unit="km"
                 helpText="Ab dieser Distanz gilt der Fernpreis"
               />
-              <InfoBox text="Marktvergleich: Nahbereich \u20AC1.50-2.50, Fernbereich \u20AC0.80-1.20" />
+              <InfoBox text="Marktvergleich: Nahbereich €1.50-2.50, Fernbereich €0.80-1.20" />
             </Section>
 
             {/* ── Labor Costs ─────────────────────────── */}
@@ -305,29 +305,29 @@ export default function PricingConfig() {
                 label="Min. Stundenlohn pro Helfer"
                 value={config.hourly_labor_min}
                 onChange={(val) => updateConfig('hourly_labor_min', val)}
-                min={40} max={80} step={5} unit="\u20AC/Std"
-                helpText="Mindestkosten fuer Arbeitsstunde"
+                min={40} max={80} step={5} unit="€/Std"
+                helpText="Mindestkosten für Arbeitsstunde"
               />
               <NumberInput
                 label="Max. Stundenlohn pro Helfer"
                 value={config.hourly_labor_max}
                 onChange={(val) => updateConfig('hourly_labor_max', val)}
-                min={50} max={100} step={5} unit="\u20AC/Std"
-                helpText="Hoechstkosten fuer Arbeitsstunde"
+                min={50} max={100} step={5} unit="€/Std"
+                helpText="Höchstkosten für Arbeitsstunde"
               />
               <NumberInput
                 label="Mindestanzahl Helfer"
                 value={config.min_movers}
                 onChange={(val) => updateConfig('min_movers', val)}
                 min={2} max={4} step={1} unit="Pers."
-                helpText="Minimum Crew-Groesse. Wird bei grossen Volumen automatisch auf 3-4 erhoeht."
+                helpText="Minimum Crew-Größe. Wird bei großen Volumen automatisch auf 3-4 erhöht."
               />
               <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
                 <div className="flex items-start gap-2">
                   <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5" />
                   <div className="text-xs text-orange-800">
-                    <strong>Hinweis:</strong> Aktuelle Werte (\u20AC{config.hourly_labor_min}-{config.hourly_labor_max}) sind im oberen Quartil.
-                    Marktdurchschnitt: \u20AC45-65. Erwaegen Sie eine Anpassung fuer bessere Wettbewerbsfaehigkeit.
+                    <strong>Hinweis:</strong> Aktuelle Werte (€{config.hourly_labor_min}-{config.hourly_labor_max}) sind im oberen Quartil.
+                    Marktdurchschnitt: €45-65. Erwägen Sie eine Anpassung für bessere Wettbewerbsfähigkeit.
                   </div>
                 </div>
               </div>
@@ -340,7 +340,7 @@ export default function PricingConfig() {
                 value={config.floor_surcharge_percent * 100}
                 onChange={(val) => updateConfig('floor_surcharge_percent', val / 100)}
                 min={5} max={25} step={1} unit="%"
-                helpText="Zuschlag ab 3. Etage ohne Aufzug, berechnet auf Volumen- + Arbeitskosten. Wird separat fuer Min/Max berechnet."
+                helpText="Zuschlag ab 3. Etage ohne Aufzug, berechnet auf Volumen- + Arbeitskosten. Wird separat für Min/Max berechnet."
               />
             </Section>
 
@@ -350,63 +350,63 @@ export default function PricingConfig() {
                 label="HVZ Genehmigung (Halteverbotszone)"
                 value={config.hvz_permit_cost}
                 onChange={(val) => updateConfig('hvz_permit_cost', val)}
-                min={50} max={200} step={10} unit="\u20AC"
+                min={50} max={200} step={10} unit="€"
                 helpText="Pauschalpreis inkl. Beantragung und Aufstellung der Schilder"
               />
               <NumberInput
-                label="Kuechenmontage (pro Laufmeter)"
+                label="Küchenmontage (pro Laufmeter)"
                 value={config.kitchen_assembly_per_meter}
                 onChange={(val) => updateConfig('kitchen_assembly_per_meter', val)}
-                min={25} max={80} step={5} unit="\u20AC/m"
-                helpText="Preis pro Meter Kueche (Abbau + Transport + Montage)"
+                min={25} max={80} step={5} unit="€/m"
+                helpText="Preis pro Meter Küche (Abbau + Transport + Montage)"
               />
               <div className="grid grid-cols-2 gap-4">
                 <NumberInput
-                  label="Aussenaufzug Min."
+                  label="Außenaufzug Min."
                   value={config.external_lift_cost_min}
                   onChange={(val) => updateConfig('external_lift_cost_min', val)}
-                  min={200} max={500} step={50} unit="\u20AC"
+                  min={200} max={500} step={50} unit="€"
                   helpText="Mindestpreis"
                 />
                 <NumberInput
-                  label="Aussenaufzug Max."
+                  label="Außenaufzug Max."
                   value={config.external_lift_cost_max}
                   onChange={(val) => updateConfig('external_lift_cost_max', val)}
-                  min={300} max={800} step={50} unit="\u20AC"
-                  helpText="Hoechstpreis"
+                  min={300} max={800} step={50} unit="€"
+                  helpText="Höchstpreis"
                 />
               </div>
               <NumberInput
-                label="Verpackungsmaterial pro m\u00B3"
+                label="Verpackungsmaterial pro m³"
                 value={config.packing_materials_per_m3}
                 onChange={(val) => updateConfig('packing_materials_per_m3', val)}
-                min={4} max={15} step={1} unit="\u20AC/m\u00B3"
+                min={4} max={15} step={1} unit="€/m³"
                 helpText="Kartons, Klebeband, Luftpolsterfolie etc. Wird nur berechnet wenn Packservice aktiviert."
               />
-              <InfoBox text="Marktvergleich: HVZ \u20AC80-150, Kueche \u20AC35-60/m, Aussenaufzug \u20AC250-600, Verpackung \u20AC6-12/m\u00B3" />
+              <InfoBox text="Marktvergleich: HVZ €80-150, Küche €35-60/m, Außenaufzug €250-600, Verpackung €6-12/m³" />
             </Section>
 
             {/* ── Disposal / Long Carry ───────────────── */}
-            <Section icon={<Trash2 className="w-5 h-5 text-primary-600" />} title="Entruempelung & Trageweg">
+            <Section icon={<Trash2 className="w-5 h-5 text-primary-600" />} title="Entrümpelung & Trageweg">
               <NumberInput
-                label="Entruempelung Grundgebuehr"
+                label="Entrümpelung Grundgebühr"
                 value={config.disposal_base_cost}
                 onChange={(val) => updateConfig('disposal_base_cost', val)}
-                min={40} max={150} step={10} unit="\u20AC"
-                helpText="Einmalige Grundgebuehr fuer Entsorgungsfahrt + Anmeldung"
+                min={40} max={150} step={10} unit="€"
+                helpText="Einmalige Grundgebühr für Entsorgungsfahrt + Anmeldung"
               />
               <NumberInput
-                label="Entruempelung pro m\u00B3"
+                label="Entrümpelung pro m³"
                 value={config.disposal_per_m3}
                 onChange={(val) => updateConfig('disposal_per_m3', val)}
-                min={25} max={80} step={5} unit="\u20AC/m\u00B3"
-                helpText="Volumenbasierter Preis fuer zu entsorgende Gegenstaende"
+                min={25} max={80} step={5} unit="€/m³"
+                helpText="Volumenbasierter Preis für zu entsorgende Gegenstände"
               />
               <NumberInput
                 label="Langer Trageweg (pro 10m)"
                 value={config.long_carry_per_10m}
                 onChange={(val) => updateConfig('long_carry_per_10m', val)}
-                min={15} max={60} step={5} unit="\u20AC"
+                min={15} max={60} step={5} unit="€"
                 helpText="Zuschlag wenn LKW nicht direkt am Eingang parken kann. Erste 10m sind kostenfrei, danach pro angefangene 10m."
               />
             </Section>
@@ -417,29 +417,29 @@ export default function PricingConfig() {
                 label="Basis-Schutz (Pauschale)"
                 value={config.insurance_basic_flat}
                 onChange={(val) => updateConfig('insurance_basic_flat', val)}
-                min={29} max={99} step={5} unit="\u20AC"
-                helpText="Pauschalpreis fuer Basis-Transportversicherung (bis \u20AC50.000 Deckungssumme)"
+                min={29} max={99} step={5} unit="€"
+                helpText="Pauschalpreis für Basis-Transportversicherung (bis €50.000 Deckungssumme)"
               />
               <NumberInput
                 label="Premium-Schutz (% vom Wert)"
                 value={config.insurance_premium_percent * 100}
                 onChange={(val) => updateConfig('insurance_premium_percent', val / 100)}
                 min={0.5} max={3} step={0.1} unit="%"
-                helpText="Prozentsatz der vom Kunden deklarierten Werthoehe fuer volle Neuwert-Absicherung"
+                helpText="Prozentsatz der vom Kunden deklarierten Werthöhe für volle Neuwert-Absicherung"
               />
               <NumberInput
                 label="Premium Mindestpreis"
                 value={config.insurance_premium_min}
                 onChange={(val) => updateConfig('insurance_premium_min', val)}
-                min={49} max={199} step={10} unit="\u20AC"
-                helpText="Mindestbetrag fuer Premium-Versicherung, auch bei niedrigem Deklarationswert"
+                min={49} max={199} step={10} unit="€"
+                helpText="Mindestbetrag für Premium-Versicherung, auch bei niedrigem Deklarationswert"
               />
             </Section>
 
             {/* ── Heavy Item Surcharges ────────────────── */}
-            <Section icon={<Weight className="w-5 h-5 text-primary-600" />} title="Schwerlast-Zuschlaege">
+            <Section icon={<Weight className="w-5 h-5 text-primary-600" />} title="Schwerlast-Zuschläge">
               <p className="text-xs text-gray-600 mb-3">
-                Automatische Zuschlaege fuer Spezialgegenstaende die besonderes Equipment oder Fachpersonal erfordern.
+                Automatische Zuschläge für Spezialgegenstände die besonderes Equipment oder Fachpersonal erfordern.
                 Werden anhand des Artikelnamens im Inventar erkannt.
               </p>
               {Object.entries(config.heavy_item_surcharges).map(([key, value]) => (
@@ -448,30 +448,30 @@ export default function PricingConfig() {
                   label={HEAVY_ITEM_LABELS[key] || key}
                   value={value}
                   onChange={(val) => updateHeavyItem(key, val)}
-                  min={20} max={300} step={10} unit="\u20AC"
-                  helpText={`Zuschlag pro Stueck`}
+                  min={20} max={300} step={10} unit="€"
+                  helpText={`Zuschlag pro Stück`}
                 />
               ))}
             </Section>
 
             {/* ── Weekend/Holiday Surcharges ───────────── */}
-            <Section icon={<Calendar className="w-5 h-5 text-primary-600" />} title="Wochenend- & Feiertagszuschlaege">
+            <Section icon={<Calendar className="w-5 h-5 text-primary-600" />} title="Wochenend- & Feiertagszuschläge">
               <p className="text-xs text-gray-600 mb-3">
-                Automatische Zuschlaege basierend auf dem Umzugsdatum. Werden auf den Gesamtpreis (netto) aufgeschlagen.
+                Automatische Zuschläge basierend auf dem Umzugsdatum. Werden auf den Gesamtpreis (netto) aufgeschlagen.
               </p>
               <NumberInput
                 label="Wochenendzuschlag (Sa/So)"
                 value={config.weekend_surcharge_percent * 100}
                 onChange={(val) => updateConfig('weekend_surcharge_percent', val / 100)}
                 min={0} max={50} step={5} unit="%"
-                helpText="Aufschlag fuer Umzuege am Samstag oder Sonntag"
+                helpText="Aufschlag für Umzüge am Samstag oder Sonntag"
               />
               <NumberInput
                 label="Feiertagszuschlag"
                 value={config.holiday_surcharge_percent * 100}
                 onChange={(val) => updateConfig('holiday_surcharge_percent', val / 100)}
                 min={0} max={100} step={5} unit="%"
-                helpText="Aufschlag fuer gesetzliche Feiertage (Neujahr, 1. Mai, Tag der Dt. Einheit, Weihnachten)"
+                helpText="Aufschlag für gesetzliche Feiertage (Neujahr, 1. Mai, Tag der Dt. Einheit, Weihnachten)"
               />
             </Section>
 
@@ -479,7 +479,7 @@ export default function PricingConfig() {
             <Section icon={<Settings className="w-5 h-5 text-primary-600" />} title="Regionale & Saisonale Anpassung">
               <ToggleSwitch
                 label="Regionale Preisanpassung"
-                description="Automatischer Aufschlag basierend auf PLZ: Muenchen +15%, Frankfurt +12%, Stuttgart/Hamburg +10%, Berlin +8%, Koeln +5%"
+                description="Automatischer Aufschlag basierend auf PLZ: München +15%, Frankfurt +12%, Stuttgart/Hamburg +10%, Berlin +8%, Köln +5%"
                 enabled={config.enable_regional_pricing}
                 onChange={(val) => updateConfig('enable_regional_pricing', val)}
               />
@@ -523,18 +523,18 @@ export default function PricingConfig() {
                 <div>
                   <p className="font-bold text-gray-900 mb-1">1. Basiskosten</p>
                   <ul className="list-disc list-inside space-y-0.5 ml-1">
-                    <li>Volumen x \u20AC/m\u00B3 (Min/Max)</li>
-                    <li>Distanz x \u20AC/km (\u00B110% Spanne)</li>
-                    <li>Mannstunden x \u20AC/Std (Min/Max)</li>
+                    <li>Volumen x €/m³ (Min/Max)</li>
+                    <li>Distanz x €/km (±10% Spanne)</li>
+                    <li>Mannstunden x €/Std (Min/Max)</li>
                   </ul>
                 </div>
 
                 <div>
-                  <p className="font-bold text-gray-900 mb-1">2. Zuschlaege</p>
+                  <p className="font-bold text-gray-900 mb-1">2. Zuschläge</p>
                   <ul className="list-disc list-inside space-y-0.5 ml-1">
                     <li>Etagenzuschlag (Min/Max)</li>
-                    <li>Services (HVZ, Kueche, Lift...)</li>
-                    <li>Schwerlast-Gegenstaende</li>
+                    <li>Services (HVZ, Küche, Lift...)</li>
+                    <li>Schwerlast-Gegenstände</li>
                     <li>Verpackungsmaterial</li>
                   </ul>
                 </div>
@@ -567,20 +567,20 @@ export default function PricingConfig() {
               </h3>
 
               <div className="text-xs text-gray-600 mb-3">
-                2-Zimmer, 40 m\u00B3, 50 km, 2. OG, Werktag
+                2-Zimmer, 40 m³, 50 km, 2. OG, Werktag
               </div>
 
               <div className="space-y-2 text-xs">
-                <PreviewRow label="Volumenkosten" value={`\u20AC${(40 * config.base_rate_m3_min).toFixed(0)} - \u20AC${(40 * config.base_rate_m3_max).toFixed(0)}`} />
-                <PreviewRow label="Kilometerkosten" value={`\u20AC${(50 * config.rate_km_near * 0.9).toFixed(0)} - \u20AC${(50 * config.rate_km_near * 1.1).toFixed(0)}`} />
-                <PreviewRow label="Arbeitskosten (4h)" value={`\u20AC${(4 * config.hourly_labor_min).toFixed(0)} - \u20AC${(4 * config.hourly_labor_max).toFixed(0)}`} />
+                <PreviewRow label="Volumenkosten" value={`€${(40 * config.base_rate_m3_min).toFixed(0)} - €${(40 * config.base_rate_m3_max).toFixed(0)}`} />
+                <PreviewRow label="Kilometerkosten" value={`€${(50 * config.rate_km_near * 0.9).toFixed(0)} - €${(50 * config.rate_km_near * 1.1).toFixed(0)}`} />
+                <PreviewRow label="Arbeitskosten (4h)" value={`€${(4 * config.hourly_labor_min).toFixed(0)} - €${(4 * config.hourly_labor_max).toFixed(0)}`} />
               </div>
 
               <div className="mt-3 pt-3 border-t border-gray-300">
                 <div className="flex justify-between items-center">
                   <span className="font-semibold text-gray-900">Gesamt (ca.)</span>
                   <span className="text-lg font-bold text-primary-600">
-                    \u20AC{calculateExampleTotal(config, 'min')} - \u20AC{calculateExampleTotal(config, 'max')}
+                    €{calculateExampleTotal(config, 'min')} - €{calculateExampleTotal(config, 'max')}
                   </span>
                 </div>
                 <div className="text-xs text-gray-500 text-right mt-1">inkl. 19% MwSt.</div>
@@ -592,20 +592,11 @@ export default function PricingConfig() {
                   <div className="flex justify-between">
                     <span>Am Samstag (+{(config.weekend_surcharge_percent * 100).toFixed(0)}%):</span>
                     <span className="font-semibold">
-                      \u20AC{(parseFloat(calculateExampleTotal(config, 'min')) * (1 + config.weekend_surcharge_percent)).toFixed(0)} - \u20AC{(parseFloat(calculateExampleTotal(config, 'max')) * (1 + config.weekend_surcharge_percent)).toFixed(0)}
+                      €{(parseFloat(calculateExampleTotal(config, 'min')) * (1 + config.weekend_surcharge_percent)).toFixed(0)} - €{(parseFloat(calculateExampleTotal(config, 'max')) * (1 + config.weekend_surcharge_percent)).toFixed(0)}
                     </span>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Market Position */}
-            <div className="card">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Marktpositionierung</h3>
-              <div className="space-y-3">
-                <PositionIndicator category="Volumenpreis" current={config.base_rate_m3_min} budget={20} mid={32.5} premium={42.5} unit="\u20AC/m\u00B3" />
-                <PositionIndicator category="Arbeitskosten" current={config.hourly_labor_min} budget={45} mid={55} premium={65} unit="\u20AC/Std" />
-              </div>
             </div>
 
             {/* Quick Reference */}
@@ -613,13 +604,13 @@ export default function PricingConfig() {
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Schnellreferenz: Nur Volumen</h3>
               <div className="space-y-2 text-xs">
                 {[
-                  { label: 'Studio (15 m\u00B3)', vol: 15 },
-                  { label: '2-Zimmer (40 m\u00B3)', vol: 40 },
-                  { label: '4-Zimmer (80 m\u00B3)', vol: 80 },
+                  { label: 'Studio (15 m³)', vol: 15 },
+                  { label: '2-Zimmer (40 m³)', vol: 40 },
+                  { label: '4-Zimmer (80 m³)', vol: 80 },
                 ].map(({ label, vol }) => (
                   <div key={vol} className="flex justify-between">
                     <span className="text-gray-600">{label}</span>
-                    <span className="font-semibold">\u20AC{(vol * config.base_rate_m3_min).toFixed(0)} - \u20AC{(vol * config.base_rate_m3_max).toFixed(0)}</span>
+                    <span className="font-semibold">€{(vol * config.base_rate_m3_min).toFixed(0)} - €{(vol * config.base_rate_m3_max).toFixed(0)}</span>
                   </div>
                 ))}
               </div>
@@ -636,7 +627,7 @@ export default function PricingConfig() {
                 <FeatureStatus label="Saisonale Preise" active={config.enable_seasonal_pricing} />
                 <FeatureStatus label={`Wochenendzuschlag (${(config.weekend_surcharge_percent * 100).toFixed(0)}%)`} active={config.weekend_surcharge_percent > 0} />
                 <FeatureStatus label={`Feiertagszuschlag (${(config.holiday_surcharge_percent * 100).toFixed(0)}%)`} active={config.holiday_surcharge_percent > 0} />
-                <FeatureStatus label="Schwerlast-Zuschlaege" active={Object.values(config.heavy_item_surcharges).some(v => v > 0)} />
+                <FeatureStatus label="Schwerlast-Zuschläge" active={Object.values(config.heavy_item_surcharges).some(v => v > 0)} />
                 <FeatureStatus label="Transportversicherung" active={config.insurance_basic_flat > 0} />
               </div>
             </div>
@@ -741,45 +732,6 @@ function FeatureStatus({ label, active }: { label: string; active: boolean }) {
     <div className="flex items-center gap-2">
       <div className={clsx('w-2 h-2 rounded-full', { 'bg-green-500': active, 'bg-gray-300': !active })} />
       <span className={active ? 'text-green-800' : 'text-gray-500'}>{label}</span>
-    </div>
-  )
-}
-
-function PositionIndicator({
-  category, current, budget, mid, premium, unit
-}: {
-  category: string; current: number; budget: number; mid: number; premium: number; unit: string
-}) {
-  const position = current <= budget ? 'budget' : current <= mid ? 'mid' : 'premium'
-  return (
-    <div>
-      <div className="flex justify-between text-xs mb-2">
-        <span className="text-gray-600">{category}</span>
-        <span className="font-semibold text-gray-900">{current}{unit}</span>
-      </div>
-      <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-        <div className="absolute inset-0 flex">
-          <div className="flex-1 bg-green-300" />
-          <div className="flex-1 bg-blue-300" />
-          <div className="flex-1 bg-purple-300" />
-        </div>
-        <div
-          className="absolute top-0 bottom-0 w-1 bg-red-600"
-          style={{ left: `${Math.min(((current - budget) / (premium - budget)) * 100, 100)}%` }}
-        />
-      </div>
-      <div className="flex justify-between text-xs mt-1 text-gray-500">
-        <span>Budget</span><span>Mittel</span><span>Premium</span>
-      </div>
-      <div className="text-xs text-center mt-1">
-        <span className={clsx('font-medium', {
-          'text-green-600': position === 'budget',
-          'text-blue-600': position === 'mid',
-          'text-purple-600': position === 'premium'
-        })}>
-          {position === 'budget' ? 'Budget-Segment' : position === 'mid' ? 'Mittelklasse' : 'Premium-Segment'}
-        </span>
-      </div>
     </div>
   )
 }
