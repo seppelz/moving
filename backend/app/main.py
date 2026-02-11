@@ -45,31 +45,28 @@ async def startup_migrations():
     from app.core.database import engine
     
     logger.info("Checking for database schema updates...")
-    try:
-        with engine.begin() as conn:
-            new_columns = [
-                ("is_fixed_price", "BOOLEAN DEFAULT FALSE"),
-                ("moving_date", "VARCHAR"),
-                ("wants_callback", "BOOLEAN DEFAULT FALSE"),
-                ("wants_moving_tips", "BOOLEAN DEFAULT FALSE"),
-                ("actual_cost", "NUMERIC(10,2)"),
-                ("actual_volume_m3", "NUMERIC(10,2)"),
-                ("actual_hours", "NUMERIC(10,2)"),
-                ("feedback_notes", "VARCHAR"),
-                ("feedback_rating", "NUMERIC(2,1)"),
-            ]
-            for col_name, col_type in new_columns:
-                try:
-                    conn.execute(text(f"ALTER TABLE quotes ADD COLUMN {col_name} {col_type}"))
-                    logger.info(f"✓ Database updated: Added '{col_name}' column")
-                except Exception as e:
-                    error_msg = str(e).lower()
-                    if "already exists" in error_msg or "duplicate column" in error_msg:
-                        pass  # Column already exists
-                    else:
-                        logger.warning(f"- Could not add '{col_name}' column: {e}")
-    except Exception as e:
-        logger.error(f"✗ Schema update failed: {e}")
+    new_columns = [
+        ("is_fixed_price", "BOOLEAN DEFAULT FALSE"),
+        ("moving_date", "VARCHAR"),
+        ("wants_callback", "BOOLEAN DEFAULT FALSE"),
+        ("wants_moving_tips", "BOOLEAN DEFAULT FALSE"),
+        ("actual_cost", "NUMERIC(10,2)"),
+        ("actual_volume_m3", "NUMERIC(10,2)"),
+        ("actual_hours", "NUMERIC(10,2)"),
+        ("feedback_notes", "VARCHAR"),
+        ("feedback_rating", "NUMERIC(2,1)"),
+    ]
+    for col_name, col_type in new_columns:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE quotes ADD COLUMN {col_name} {col_type}"))
+                logger.info(f"✓ Database updated: Added '{col_name}' column")
+        except Exception as e:
+            error_msg = str(e).lower()
+            if "already exists" in error_msg or "duplicate column" in error_msg:
+                pass  # Column already exists
+            else:
+                logger.warning(f"- Could not add '{col_name}' column: {e}")
 
 # Background cleanup task
 async def background_cleanup():

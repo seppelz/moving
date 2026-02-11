@@ -29,6 +29,10 @@ class TokenResponse(BaseModel):
 ADMIN_USERNAME = getattr(settings, 'ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', 'movemaster2026')
 
+import logging as _logging
+_auth_logger = _logging.getLogger(__name__)
+_auth_logger.info(f"Auth config loaded: username='{ADMIN_USERNAME}', password_length={len(ADMIN_PASSWORD)}, password_start='{ADMIN_PASSWORD[:3]}***'")
+
 
 def _verify_password(plain_password: str, expected_password: str) -> bool:
     """Constant-time password comparison to prevent timing attacks"""
