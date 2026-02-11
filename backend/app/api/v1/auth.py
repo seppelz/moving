@@ -1,18 +1,18 @@
 """
 Authentication endpoints and middleware for admin access
 """
+import hashlib
+import hmac
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
 router = APIRouter()
 security = HTTPBearer()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class LoginRequest(BaseModel):
@@ -25,11 +25,17 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-# Default admin credentials (should be overridden via env vars)
+# Admin credentials from config/env vars
 ADMIN_USERNAME = getattr(settings, 'ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD_HASH = pwd_context.hash(
-    getattr(settings, 'ADMIN_PASSWORD', 'movemaster2026')
-)
+ADMIN_PASSWORD = getattr(settings, 'ADMIN_PASSWORD', 'movemaster2026')
+
+
+def _verify_password(plain_password: str, expected_password: str) -> bool:
+    """Constant-time password comparison to prevent timing attacks"""
+    return hmac.compare_digest(
+        plain_password.encode('utf-8'),
+        expected_password.encode('utf-8')
+    )
 
 
 def create_access_token(data: dict) -> str:
@@ -64,7 +70,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 @router.post("/login", response_model=TokenResponse)
 async def login(request: LoginRequest):
     """Admin login endpoint"""
-    if request.username != ADMIN_USERNAME or not pwd_context.verify(request.password, ADMIN_PASSWORD_HASH):
+    if request.username != ADMIN_USERNAME or not _verify_password(request.password, ADMIN_PASSWORD):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Ungültige Anmeldedaten"
