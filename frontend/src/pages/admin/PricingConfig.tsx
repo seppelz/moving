@@ -303,14 +303,14 @@ export default function PricingConfig() {
                 label="Min. Stundenlohn pro Helfer"
                 value={config.hourly_labor_min}
                 onChange={(val) => updateConfig('hourly_labor_min', val)}
-                min={40} max={80} step={5} unit="€/Std"
+                min={10} max={80} step={5} unit="€/Std"
                 helpText="Mindestkosten für Arbeitsstunde"
               />
               <NumberInput
                 label="Max. Stundenlohn pro Helfer"
                 value={config.hourly_labor_max}
                 onChange={(val) => updateConfig('hourly_labor_max', val)}
-                min={50} max={100} step={5} unit="€/Std"
+                min={10} max={100} step={5} unit="€/Std"
                 helpText="Höchstkosten für Arbeitsstunde"
               />
               <NumberInput
@@ -354,14 +354,14 @@ export default function PricingConfig() {
                   label="Außenaufzug Min."
                   value={config.external_lift_cost_min}
                   onChange={(val) => updateConfig('external_lift_cost_min', val)}
-                  min={200} max={500} step={50} unit="€"
+                  min={100} max={500} step={50} unit="€"
                   helpText="Mindestpreis"
                 />
                 <NumberInput
                   label="Außenaufzug Max."
                   value={config.external_lift_cost_max}
                   onChange={(val) => updateConfig('external_lift_cost_max', val)}
-                  min={300} max={800} step={50} unit="€"
+                  min={100} max={800} step={50} unit="€"
                   helpText="Höchstpreis"
                 />
               </div>
